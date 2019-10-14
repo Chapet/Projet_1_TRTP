@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-typedef enum {
+typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
     E_GENERIC = 1,
     E_FILENAME = 2,
