@@ -4,9 +4,9 @@
 status_code reader(char * filename) {
 
     // open filename if fArg, stdin otherwise
-    int fd = STDIN_FILENO;
-    if (fArg) {
-        fd = open(filename, O_RDONLY); // opening the fd
+    int fd = STDIN_FILENO; // stdin (== 0)
+    if (filename == NULL) { // arg -f not specified
+        fd = open(filename, O_RDONLY); // opening the fd in read-only
         if (fd < 0) {
             return E_FILENAME;
         }
@@ -41,6 +41,6 @@ status_code reader(char * filename) {
 }
 
 status_code sender(char * buf) {
-    pkt_t packet;
+    pkt_t *pkt = pkt_new(); // creating a new empty packet
 
 }
