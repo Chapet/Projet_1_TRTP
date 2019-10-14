@@ -18,9 +18,13 @@ int main(const int argc, char * argv[]) {
         }
     }
 
-    hostname = malloc(sizeof(char)*strlen(argv[optind]));
-    char ** endptr = malloc(sizeof(char **));
-    port = strtol(argv[optind+1], endptr, 10);
+    size_t size = sizeof(char)*strlen(argv[optind]);
+    hostname = malloc(size);
+    memcpy(hostname, argv[optind], size);
+
+    size = sizeof(char)*strlen(argv[optind+1]);
+    port = malloc(size);
+    memcpy(port, argv[optind+1], size);
 
     status_code ret = reader(filename);
     if (ret != STATUS_OK) {

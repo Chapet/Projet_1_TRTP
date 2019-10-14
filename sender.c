@@ -44,5 +44,25 @@ status_code reader(char * filename) {
 status_code sender(char * buf, uint16_t len) {
     pkt_t *pkt = pkt_new(); // creating a new empty packet
     pkt_set_payload(&pkt, buf, len);
-    
+
+    if(!isSocketReady) {
+        socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
+        if (socket_fd == -1) {
+            return E_SOCKET;
+        }
+
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET6; // set to AF_INET to force IPv4
+        hints.ai_socktype = SOCK_DGRAM;
+        getaddrinfo(hostname, port, &hints, &servinfo);
+
+        int err = connect(socket_fd, dest_addr, addrlen);
+        if (err == -1) {
+            return E_SOCKET;
+        }
+        isSocketReady = true;
+    }
+
+
+
 }
