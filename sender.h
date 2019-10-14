@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include "packet_interface.h"
 
-typedef enum {
+typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
     E_GENERIC = 1,
     E_FILENAME = 2,
@@ -17,8 +17,8 @@ typedef enum {
     E_SENDER = 4,
 } status_code;
 
-int opt;
-bool fArg;
+int opt; // used for the argument handling
+bool fArg; // the argument -f was used
 char * filename;
 char * hostname;
 long port;
