@@ -28,6 +28,6 @@ typedef enum { // possible errors encountered in sender.c
 char * hostname;
 long port;
 
-status_code reader();
-status_code sender();
+status_code reader(char * filename);
+status_code sender(char * buf, uint16_t len);
 #endif //FORMAT_SEGMENTS_SENDER_H

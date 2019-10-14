@@ -43,7 +43,6 @@ status_code reader(char * filename) {
 
 status_code sender(char * buf, uint16_t len) {
     pkt_t *pkt = pkt_new(); // creating a new empty packet
-    pkt_set_payload(&packet, buf, len);
-
-
+    pkt_set_payload(&pkt, buf, len);
+    
 }
