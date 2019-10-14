@@ -6,16 +6,15 @@ int main(const int argc, char * argv[]) {
     }
     char * filename = NULL;
     int opt;
-    while ((opt = getopt(argc, argv, "f:t")) != -1){
+    while ((opt = getopt(argc, argv, "f:")) != -1){
         if (opt=='f') {
             size_t size = sizeof(char) * strlen(optarg) + 1;
             filename = malloc(size);
             memcpy(filename, optarg, size);
-            break;
         }
         else {
-                printf("Wrong arguments\n");
-                return EXIT_FAILURE;
+            printf("Wrong arguments\n");
+            return EXIT_FAILURE;
         }
     }
 

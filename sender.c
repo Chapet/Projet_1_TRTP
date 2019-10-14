@@ -16,8 +16,9 @@ status_code reader(char * filename) {
     status_code status;
     ssize_t nBytes = read(fd, &buf, 512);
 
+    // Read filename/stdin and send via sender
     while(nBytes > 0) {
-        status = sender(buf);
+        status = sender(buf, nBytes);
         if (status != STATUS_OK) {
             close(fd);
             return status;
@@ -37,7 +38,9 @@ status_code reader(char * filename) {
     }
 }
 
-status_code sender(char * buf) {
+status_code sender(char * buf, uint16_t len) {
     pkt_t packet;
+    pkt_set_payload(&packet, buf, len);
+
 
 }
