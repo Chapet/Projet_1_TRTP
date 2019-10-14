@@ -8,6 +8,14 @@
 #include <stdbool.h>
 #include <fcntl.h>
 #include "packet_interface.h"
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 typedef enum {
     STATUS_OK = 0,
@@ -17,12 +25,8 @@ typedef enum {
     E_SENDER = 4,
 } status_code;
 
-int opt;
-bool fArg;
-char * filename;
 char * hostname;
 long port;
-bool test = false;
 
 status_code reader();
 status_code sender();

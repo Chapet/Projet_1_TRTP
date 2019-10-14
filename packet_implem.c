@@ -1,9 +1,4 @@
 #include "packet_interface.h"
-#include <stdlib.h>
-#include <string.h>
-#include <zlib.h>
-#include <math.h>
-#include <arpa/inet.h>
 
 /* Extra #includes */
 /* Your code will be inserted here */
