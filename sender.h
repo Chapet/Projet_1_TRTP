@@ -16,20 +16,35 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/time.h>
+
+
 
 typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
     E_GENERIC = 1,
     E_FILENAME = 2,
     E_READING = 3,
-    E_SOCKET = 4
+    E_SOCKET = 4,
+    E_CONNECT = 5
 } status_code;
+
+typedef struct buffer {
+    time_t timer;
+    pkt_t * pkt;
+    uint8_t seqnum;
+} buffer_t;
 
 char * hostname;
 char * port;
 struct addrinfo hints;
 struct addrinfo * servinfo;
 bool isSocketReady=false;
+
+uint8_t curr_seqnum=0;
+uint8_t window_end=31;
+time_t retransmission_timer = 5;
+buffer_t sent_packets[32];
 
 int socket_fd;
 

@@ -42,31 +42,59 @@ status_code reader(char * filename) {
 }
 
 status_code sender(char * buf, uint16_t len) {
-    pkt_t *pkt = pkt_new(); // creating a new empty packet
-    pkt_set_payload(&pkt, buf, len);
 
     if(!isSocketReady) {
         socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
         if (socket_fd == -1) {
-            return E_SOCKET;
+            return E_CONNECT;
         }
 
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET6; // IPv6
         hints.ai_socktype = SOCK_DGRAM; // diagram connectionless
-        getaddrinfo(hostname, port, &hints, &servinfo); //hostname : addr ipV6 or hostname
+        if (getaddrinfo(hostname, port, &hints, &servinfo) != 0) { //hostname : addr ipV6 or hostname
+            return E_CONNECT;
+        }
 
         // retrieving values from struct addrinfo
         socklen_t addrlen = servinfo->ai_addrlen;
         struct sockaddr* dest_addr = servinfo->ai_addr;
 
-        int err = connect(socket_fd, dest_addr, addrlen);
-        if (err == -1) {
-            return E_SOCKET;
+        if (connect(socket_fd, dest_addr, addrlen) == -1) {
+            return E_CONNECT;
         }
         isSocketReady = true;
     }
 
+    if (curr_seqnum > window_end) {
+        int packetsToResend[32];
+        packetsToResend = whichToResend();
+
+        fd_set read_fd;
+        FD_ZERO(&read_fd);
+        FD_SET(socket_fd, &read_fd);
+        struct timeval timeout = {1, 0};
+        int isAvailable = select(1, &read_fd, NULL, NULL, &timeout);
 
 
+    }
+
+
+    pkt_t *pkt = pkt_new(); // creating a new empty packet
+    pkt_set_payload(&pkt, buf, len);
+
+}
+
+int * whichToResend() {
+    int * packetsToResend = malloc(32 * sizeof(int));
+    int i;
+    for (i=0; i<32; i++) {
+        if (time(NULL) - sent_packets[i].timer > retransmission_timer) {
+            packetsToResend[i] = i;
+        }
+        else {
+            packetsToResend[i] = -1;
+        }
+    }
+    return packetsToResend;
 }
