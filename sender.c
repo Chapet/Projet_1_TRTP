@@ -52,9 +52,13 @@ status_code sender(char * buf, uint16_t len) {
         }
 
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_INET6; // set to AF_INET to force IPv4
-        hints.ai_socktype = SOCK_DGRAM;
-        getaddrinfo(hostname, port, &hints, &servinfo);
+        hints.ai_family = AF_INET6; // IPv6
+        hints.ai_socktype = SOCK_DGRAM; // diagram connectionless
+        getaddrinfo(hostname, port, &hints, &servinfo); //hostname : addr ipV6 or hostname
+
+        // retrieving values from struct addrinfo
+        socklen_t addrlen = servinfo->ai_addrlen;
+        struct sockaddr* dest_addr = servinfo->ai_addr;
 
         int err = connect(socket_fd, dest_addr, addrlen);
         if (err == -1) {
