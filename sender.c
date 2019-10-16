@@ -41,6 +41,24 @@ status_code reader(char * filename) {
     }
 }
 
+int * whichToResend() {
+    int * packetsToResend = malloc(32 * sizeof(int));
+    int i;
+    for (i=0; i<32; i++) {
+        if (time(NULL) - sent_packets[i].timer > retransmission_timer) {
+            packetsToResend[i] = i;
+        }
+        else {
+            packetsToResend[i] = -1;
+        }
+    }
+    return packetsToResend;
+}
+
+status_code resend(pkt_t * pkt) {
+    return STATUS_OK;
+}
+
 status_code sender(char * buf, uint16_t len) {
 
     if(!isSocketReady) {
@@ -67,16 +85,35 @@ status_code sender(char * buf, uint16_t len) {
     }
 
     if (curr_seqnum > window_end) {
-        int packetsToResend[32];
-        packetsToResend = whichToResend();
-
         fd_set read_fd;
         FD_ZERO(&read_fd);
         FD_SET(socket_fd, &read_fd);
-        struct timeval timeout = {1, 0};
+        struct timeval timeout = {0, 500000};
         int isAvailable = select(1, &read_fd, NULL, NULL, &timeout);
-
-
+        /*
+         * Boucler tant que l'ack n'est pas satisfaisant
+         * => Boucler sur tout le socket afin de lire tous les acks
+         * => Si aucun ack n'est satisfaisant ou pas, renvoyer tt ce que l'on doit renvoyer
+         * Attendre si rien/plus reçu et rien/plus rien a renvoyer
+         * Faire une fonction qui s'occupe de renvoyer tout ce qui doit etre renvoyer dans sent_packets
+         *
+         */
+        if (isAvailable) {
+            char * buf = malloc(11);
+            recv(socket_fd, buf, 11, 0);
+            pkt_t * pkt = pkt_new();
+            pkt_decode(buf, 11, pkt);
+        }
+        else {
+            int * packetsToResend;
+            packetsToResend = whichToResend();
+            int i;
+            for (i=0; i<32; i++) {
+                if (packetsToResend[i] != -1) {
+                    resend(sent_packets[i].pkt);
+                }
+            }
+        }
     }
 
 
@@ -85,16 +122,6 @@ status_code sender(char * buf, uint16_t len) {
 
 }
 
-int * whichToResend() {
-    int * packetsToResend = malloc(32 * sizeof(int));
-    int i;
-    for (i=0; i<32; i++) {
-        if (time(NULL) - sent_packets[i].timer > retransmission_timer) {
-            packetsToResend[i] = i;
-        }
-        else {
-            packetsToResend[i] = -1;
-        }
-    }
-    return packetsToResend;
-}
+
+
+
