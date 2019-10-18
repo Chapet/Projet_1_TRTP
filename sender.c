@@ -102,24 +102,30 @@ status_code send_pkt(pkt_t * pkt) {
 
 void removeFromSent(uint8_t seqnum) {
     int i;
-    bool del = false; // has the researched element been deleted ?
+    uint8_t nbShifted = 0;
     for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
-        if(sent_packets[i]->seqnum == seqnum) {
+        if(sent_packets[i]->seqnum - seqnum >= 31) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
             free(sent_packets[i]->pkt->payload);
             free(sent_packets[i]->pkt);
             free(sent_packets[i]);
             sent_packets[i] = NULL;
-            del = true;
+            nbShifted++;
         }
-        if (del) {
-            if(i != 31) {
-                sent_packets[i] = sent_packets[i+1];
-            }
-            else { // i == 31
-                sent_packets[i] = NULL;
+        if (nbShifted > 0) {
+            if(i <= 31) { // pb fin
+                if(sent_packets[i] == NULL) { // the element was deleted
+                    int j;
+                    for(j = 0; j < nbShifted; j++) {
+                        if(i+1+j <= 31) sent_packets[i-(nbShifted-1)+j] = NULL;
+                        else sent_packets[i-(nbShifted-1)+j] = sent_packets[i+1+j];
+                    } // so we shift accordingly the preceding packets
+                }
+                // and in any case (element deleted or not) we replace the packet by the shifted value
+                if (i+nbShifted <= 31) sent_packets[i] = NULL;
+                else sent_packets[i] = sent_packets[i+nbShifted];
             }
         }
-    } // we found the element, deleted it and shifted all the element after it to the left
+    } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
 
 }
 
@@ -203,7 +209,7 @@ status_code sender(char * data, uint16_t len) {
     emptySocket();
     resendExpiredPkt();
     time_t start = time(NULL);
-    
+
     /* (window_end - curr_seqnum) > 31 : it just means that curr_seqnum > window_end, but handles the case where
      * curr_seqnum = window_end + 1 -> the difference is 255 (> 31)
      */
@@ -228,10 +234,9 @@ status_code sender(char * data, uint16_t len) {
 
 /*
  * implementer la window dynamique -> attention que quand on fait le tour/cycle, curr_seqnum > window_end peut être un pb
- * gérer les acks cumulatifs
+
  *
  * tests
  *
- * ligne 124 si la fonction c'est une void, je return en cas d'erreur dans le malloc ? je pense que c'est kif kif bourricot
  * pq window_end init à 30 ?????????????????????????????????????????????? (ceci est une question)
  */
