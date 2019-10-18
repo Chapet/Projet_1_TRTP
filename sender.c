@@ -100,16 +100,27 @@ status_code send_pkt(pkt_t * pkt) {
     return STATUS_OK;
 }
 
-void removeFromSent(uint8_t seqnum) { // doit aussi décaler tout les élements après
+void removeFromSent(uint8_t seqnum) {
     int i;
+    bool del = false; // has the researched element been deleted ?
     for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
         if(sent_packets[i]->seqnum == seqnum) {
             free(sent_packets[i]->pkt->payload);
             free(sent_packets[i]->pkt);
             free(sent_packets[i]);
             sent_packets[i] = NULL;
+            del = true;
         }
-    }
+        if (del) {
+            if(i != 31) {
+                sent_packets[i] = sent_packets[i+1];
+            }
+            else { // i == 31
+                sent_packets[i] = NULL;
+            }
+        }
+    } // we found the element, deleted it and shifted all the element after it to the left
+
 }
 
 void emptySocket() {
@@ -202,12 +213,12 @@ status_code sender(char * data, uint16_t len) {
 
     /*
      * implementer la window dynamique -> attention que quand on fait le tour curr_seqnum > window_end peut être un pb
-     * décaler les stuct dans le buffer sent_packets
+     * décaler les stuct dans le buffer sent_packets ds removeFromSent
      * gérer les acks cumulatifs
      *
      * tests
      *
-     * ligne 124 si la fonction c'est une void, je return en cas d'erreur dans le malloc ?
+     * ligne 124 si la fonction c'est une void, je return en cas d'erreur dans le malloc ? je pense que c'est kif kif bourricot
      */
 
     pkt_t *pkt = pkt_new(); // creating a new empty packet
