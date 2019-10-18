@@ -4,6 +4,7 @@
 
 int main(const int argc, char * argv[]) {
     if (argc < 3 || argc > 4) {
+        printf("Not enough or too much arguments\n");
         return EXIT_FAILURE;
     }
     char * filename = NULL;

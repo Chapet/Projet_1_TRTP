@@ -59,7 +59,7 @@ int * whichToResend() {
 
 bool isToResend(uint8_t seqnum) {
     int i;
-    for (i=0; sent_packets[i] != NULL; i++) {
+    for (i=0; i< 32 && sent_packets[i] != NULL; i++) {
         if ((sent_packets[i]->pkt)->Seqnum == seqnum) {
             return true;
         }

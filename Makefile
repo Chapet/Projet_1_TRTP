@@ -1,6 +1,6 @@
 
 main.out: main.o sender.o packet_implem.o
-	gcc -o hello main.o sender.o packet_implem.o -lz
+	gcc -o main.out main.o sender.o packet_implem.o -lz
 
 main.o: main.c sender.h
 	gcc -o main.o -c main.c -W -Wall -Werror
