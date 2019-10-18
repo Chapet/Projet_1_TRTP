@@ -1,3 +1,4 @@
+#include <time.h>
 #include "sender.h"
 
 
@@ -19,7 +20,7 @@ status_code reader(char * filename) {
 
     // Read filename/stdin and send via sender
     while(nBytes > 0) {
-        status = sender(buf, nBytes);
+        status = sender(buf, nBytes); // sender is a blocking call, so each time we read a pkt to send we send it
         if (status != STATUS_OK) {
             close(fd);
             return status;
@@ -59,8 +60,8 @@ int * whichToResend() {
 
 bool isToResend(uint8_t seqnum) {
     int i;
-    for (i=0; sent_packets[i] != NULL; i++) {
-        if ((sent_packets[i]->pkt)->Seqnum == seqnum) {
+    for (i=0; i < 31 && sent_packets[i] != NULL; i++) {
+        if (pkt_get_seqnum(sent_packets[i]->pkt)== seqnum) {
             return true;
         }
     }
@@ -68,8 +69,11 @@ bool isToResend(uint8_t seqnum) {
 }
 
 status_code send_pkt(pkt_t * pkt) {
-    size_t size = predict_header_length(pkt) + pkt_get_length(pkt) + 2* sizeof(uint32_t);
+    size_t size = predict_header_length(pkt) + pkt_get_length(pkt) + 2* sizeof(uint32_t); // header + CRC1 + payload + CRC2
     char * buf = malloc(size);
+    if (buf == NULL) {
+        return E_SEND_PKT;
+    }
     pkt_status_code status = pkt_encode(pkt, buf, &size);
     if (status != PKT_OK) {
         return E_SEND_PKT;
@@ -81,21 +85,24 @@ status_code send_pkt(pkt_t * pkt) {
 
     curr_seqnum++;
     buffer_t * sent_pkt = malloc(sizeof(buffer_t));
+    if(sent_pkt == NULL) {
+        return E_SEND_PKT;
+    }
     sent_pkt->timer = time(NULL);
-    sent_pkt->seqnum = pkt->Seqnum;
+    sent_pkt->seqnum = pkt_get_seqnum(pkt);
     sent_pkt->pkt = pkt;
+    // adds the packet that was just sent to the buffer and sets the different struct fields
 
     int i;
-    for(i=0; sent_packets[i] != NULL; i++);
+    for(i=0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
     sent_packets[i] = sent_pkt;
 
-    //Encode pkt and send it using send(2)
     return STATUS_OK;
 }
 
-void removeFromSent(uint8_t seqnum) {
+void removeFromSent(uint8_t seqnum) { // doit aussi décaler tout les élements après
     int i;
-    for(i=0; sent_packets[i] != NULL; i++) {
+    for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
         if(sent_packets[i]->seqnum == seqnum) {
             free(sent_packets[i]->pkt->payload);
             free(sent_packets[i]->pkt);
@@ -103,39 +110,43 @@ void removeFromSent(uint8_t seqnum) {
             sent_packets[i] = NULL;
         }
     }
-    return;
 }
 
 void emptySocket() {
     fd_set read_fd;
-    FD_ZERO(&read_fd);
-    FD_SET(socket_fd, &read_fd);
+    FD_ZERO(&read_fd); // clears the set
+    FD_SET(socket_fd, &read_fd); // adds the fd socket_fd to the set
 
     int isAvailable = select(1, &read_fd, NULL, NULL, &select_timeout);
+    // checks if the socket_fd can be read from, with a timeout of 1s
 
-    char * buf = malloc(11);
+    char * buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
+    if (buf == NULL) {
+        return;
+    }
 
-    while(isAvailable) {
-        recv(socket_fd, buf, 11, 0);
+    while(isAvailable) { // while there is a ack packet to be read
+        recv(socket_fd, buf, 11, 0); // rcv 11 bytes from the socket
         pkt_t * pkt = pkt_new();
         pkt_status_code status = pkt_decode(buf, 11, pkt);
 
         if (status == PKT_OK) {
-            if (pkt->Type == 2 && isToResend(pkt->Seqnum)) {
-                removeFromSent(pkt->Seqnum);
+            if (pkt->Type == 2 && isToResend(pkt->Seqnum)) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
+                removeFromSent(pkt->Seqnum); // the pkt has been acked and thus removed from the sent_packet buffer
             }
-            else if (pkt->Type == 3 && isToResend(pkt->Seqnum)) {
-                send_pkt(pkt);
+            else if (pkt->Type == 3 && isToResend(pkt->Seqnum)) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
+                send_pkt(pkt); // the packet is not acked, it is re-sent
             }
         }
-        isAvailable = select(1, &read_fd, NULL, NULL, &select_timeout);
+        isAvailable = select(1, &read_fd, NULL, NULL, &select_timeout); // reset the select to look for incoming ack packets
     }
 
     free(buf);
 }
+
 void resendExpiredPkt() {
     int i;
-    for(i=0; sent_packets[i] != NULL; i++) {
+    for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
         if((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
             send_pkt(sent_packets[i]->pkt);
         }
@@ -145,7 +156,7 @@ void resendExpiredPkt() {
 
 status_code sender(char * data, uint16_t len) {
 
-    if(!isSocketReady) {
+    if(!isSocketReady) { // the socket has not been initialized yet
         socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
         if (socket_fd == -1) {
             return E_CONNECT;
@@ -154,7 +165,7 @@ status_code sender(char * data, uint16_t len) {
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET6; // IPv6
         hints.ai_socktype = SOCK_DGRAM; // diagram connectionless
-        if (getaddrinfo(hostname, port, &hints, &servinfo) != 0) { //hostname : addr ipV6 or hostname
+        if (getaddrinfo(hostname, port, &hints, &servinfo) != 0) { //hostname : ipV6 address or hostname
             return E_CONNECT;
         }
 
@@ -165,18 +176,18 @@ status_code sender(char * data, uint16_t len) {
         if (connect(socket_fd, dest_addr, addrlen) == -1) {
             return E_CONNECT;
         }
+
         int i;
         for(i=0; i<32; i++) {
             sent_packets[i] = NULL;
         }
-
         curr_seqnum=0;
         window_end=31;
         retransmission_timer = 5;
-        deadlock_timeout = 120; // 2min timeout if nothing is received and we can't send anything
-        select_timeout = (struct timeval) {.tv_sec = 1, .tv_usec = 0};
+        deadlock_timeout = 120; // 2 min timeout if nothing is received and we can't send anything
+        select_timeout = (struct timeval) {.tv_sec = 1, .tv_usec = 0}; // 1 s + 0 ms
         isSocketReady = true;
-    }
+    } // socket ready & global variables initialized
 
     emptySocket();
     resendExpiredPkt();
@@ -190,12 +201,13 @@ status_code sender(char * data, uint16_t len) {
     }
 
     /*
-     * Boucler tant que l'ack n'est pas satisfaisant
-     * => Boucler sur tout le socket afin de lire tous les acks
-     * => Si aucun ack n'est satisfaisant ou pas, renvoyer tt ce que l'on doit renvoyer
-     * Attendre si rien/plus reçu et rien/plus rien a renvoyer
-     * Faire une fonction qui s'occupe de renvoyer tout ce qui doit etre renvoyer dans sent_packets
+     * implementer la window dynamique -> attention que quand on fait le tour curr_seqnum > window_end peut être un pb
+     * décaler les stuct dans le buffer sent_packets
+     * gérer les acks cumulatifs
      *
+     * tests
+     *
+     * ligne 124 si la fonction c'est une void, je return en cas d'erreur dans le malloc ?
      */
 
     pkt_t *pkt = pkt_new(); // creating a new empty packet

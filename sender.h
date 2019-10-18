@@ -52,13 +52,66 @@ buffer_t * sent_packets[32];
 
 int socket_fd;
 
+/*
+ * Reads packet-sized data from the stdin or the file (if specified) until all the input has been "went trough"
+ * after each read, the functions sends the packet trough the network to the specified destination with a call
+ * to sender().
+ *
+ * @filename: the filename if specified, NULL otherwise.
+ *
+ * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
+ */
 status_code reader(char * filename);
-status_code sender(char * buf, uint16_t len);
+
+/*
+ * If the socket and global variables are not ready yet initializes them.
+ * Loop while the global timeout is not elapsed & the current sequence number is higher than the window end :
+ * calls to emptySocket() & resendExpiredPkt().
+ * Then sends the pkt that was last read.
+ *
+ * @data: a pointer to a maximum of 512 bytes, containing the data to send over the network.
+ * @len: the length of data.
+ *
+ * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
+ */
+status_code sender(char * data, uint16_t len);
+
+/*
+ * Encodes the pkt, sends it on the socket, increments curr_seqnum and adds the pkt to the buffer sent_packets
+ * (as a struct buffer_t).
+ *
+ * @pkt: the pkt to send on the socket.
+ *
+ * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
+ */
 status_code send_pkt(pkt_t * pkt);
-bool isToResend(uint8_t seqnum);
+
 //int * whichToResend();
-void removeFromSent(uint8_t seqnum);
+
+/*
+ * Empties the socket from the received ack packets. If the pkt is of type ack, the corresponding element is removed
+ * from the buffer sent_packets, if the pkt is of type nack, the corresponding pkt is resent.
+ */
 void emptySocket();
+
+/*
+ * Checks the buffer for sent_pkt with the sequence number equal to seqnum.
+ *
+ * @ seqnum: a sequence number in the interval [0,255].
+ *
+ * @return: true if suck a packet is found, false otherwise.
+ */
+bool isToResend(uint8_t seqnum);
+
+/*
+ * Checks the buffer for sent_pkt with the sequence number equal to seqnum, and if it is found, the pkt is
+ * removed (freed).
+ */
+void removeFromSent(uint8_t seqnum);
+
+/*
+ * Checks for each element in the buffer packet_send if the retransmission is expired, if it is, the pkt is resent.
+ */
 void resendExpiredPkt();
 
 #endif //FORMAT_SEGMENTS_SENDER_H
