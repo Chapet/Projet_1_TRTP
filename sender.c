@@ -59,7 +59,7 @@ int * whichToResend() {
 
 bool isToResend(uint8_t seqnum) {
     int i;
-    for (i=0; i< 32 && sent_packets[i] != NULL; i++) {
+    for (i=0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((sent_packets[i]->pkt)->Seqnum == seqnum) {
             return true;
         }
@@ -95,7 +95,7 @@ status_code send_pkt(pkt_t * pkt) {
 
 void removeFromSent(uint8_t seqnum) {
     int i;
-    for(i=0; sent_packets[i] != NULL; i++) {
+    for(i=0; i<31 && sent_packets[i] != NULL; i++) {
         if(sent_packets[i]->seqnum == seqnum) {
             free(sent_packets[i]->pkt->payload);
             free(sent_packets[i]->pkt);
@@ -171,7 +171,7 @@ status_code sender(char * data, uint16_t len) {
         }
 
         curr_seqnum=0;
-        window_end=31;
+        window_end=30;
         retransmission_timer = 5;
         deadlock_timeout = 120; // 2min timeout if nothing is received and we can't send anything
         select_timeout = (struct timeval) {.tv_sec = 1, .tv_usec = 0};
