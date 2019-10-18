@@ -1,4 +1,6 @@
-#include "main.h"
+#include <stdlib.h>
+#include <getopt.h>
+#include "sender.h"
 
 int main(const int argc, char * argv[]) {
     if (argc < 3 || argc > 4) {
