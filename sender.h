@@ -67,7 +67,7 @@ status_code reader(char * filename);
 /*
  * If the socket and global variables are not ready yet initializes them.
  * Loop while the global timeout is not elapsed & the current sequence number is higher than the window end :
- * calls to emptySocket() & resendExpiredPkt().
+ * calls to emptySocket() & resendExpiredPkt() (getting acks and resending packets).
  * Then sends the pkt that was last read.
  *
  * @data: a pointer to a maximum of 512 bytes, containing the data to send over the network.

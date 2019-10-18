@@ -203,7 +203,11 @@ status_code sender(char * data, uint16_t len) {
     emptySocket();
     resendExpiredPkt();
     time_t start = time(NULL);
-    while (time(NULL) - start < deadlock_timeout && curr_seqnum > window_end) {
+    
+    /* (window_end - curr_seqnum) > 31 : it just means that curr_seqnum > window_end, but handles the case where
+     * curr_seqnum = window_end + 1 -> the difference is 255 (> 31)
+     */
+    while (time(NULL) - start < deadlock_timeout && (window_end - curr_seqnum) > 31) {
         emptySocket();
         resendExpiredPkt();
     }
@@ -211,26 +215,23 @@ status_code sender(char * data, uint16_t len) {
         return E_TIMEOUT;
     }
 
-    /*
-     * implementer la window dynamique -> attention que quand on fait le tour curr_seqnum > window_end peut être un pb
-     * décaler les stuct dans le buffer sent_packets ds removeFromSent
-     * gérer les acks cumulatifs
-     *
-     * tests
-     *
-     * ligne 124 si la fonction c'est une void, je return en cas d'erreur dans le malloc ? je pense que c'est kif kif bourricot
-     */
-
     pkt_t *pkt = pkt_new(); // creating a new empty packet
     pkt_set_type(pkt, 1);
     pkt_set_tr(pkt, 0);
-    pkt_set_window(pkt, window_end + 1 - curr_seqnum);
+    pkt_set_window(pkt, (window_end + 1 - curr_seqnum)%255 );
+    // handles the facts that the two variables cycle trough 0->255
     pkt_set_seqnum(pkt, curr_seqnum);
     pkt_set_timestamp(pkt, time(NULL));
     pkt_set_payload(pkt, data, len);
     return send_pkt(pkt);
 }
 
-
-
-
+/*
+ * implementer la window dynamique -> attention que quand on fait le tour/cycle, curr_seqnum > window_end peut être un pb
+ * gérer les acks cumulatifs
+ *
+ * tests
+ *
+ * ligne 124 si la fonction c'est une void, je return en cas d'erreur dans le malloc ? je pense que c'est kif kif bourricot
+ * pq window_end init à 30 ?????????????????????????????????????????????? (ceci est une question)
+ */
