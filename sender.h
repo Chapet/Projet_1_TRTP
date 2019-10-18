@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/time.h>
+#include <time.h>
 
 
 
@@ -47,7 +48,7 @@ uint8_t window_end;
 time_t retransmission_timer;
 time_t deadlock_timeout; // 2min timeout if nothing is received and we can't send anything
 struct timeval select_timeout;
-buffer_t * sent_packets[32];
+buffer_t * sent_packets[31];
 //uint8_t nbr_sent_packets=0;
 
 int socket_fd;

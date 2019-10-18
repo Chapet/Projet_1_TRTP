@@ -182,7 +182,7 @@ status_code sender(char * data, uint16_t len) {
             sent_packets[i] = NULL;
         }
         curr_seqnum=0;
-        window_end=31;
+        window_end=30;
         retransmission_timer = 5;
         deadlock_timeout = 120; // 2 min timeout if nothing is received and we can't send anything
         select_timeout = (struct timeval) {.tv_sec = 1, .tv_usec = 0}; // 1 s + 0 ms
