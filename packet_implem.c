@@ -87,16 +87,16 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
 
     ssize_t header_size = predict_header_length(pkt);
     if(header_size<0) {
-        return E_LENGTH;
-    }
-
-    size_t expected_size = pkt_get_length(pkt) + header_size + 2*sizeof(uint32_t);
-    if (pkt_get_tr(pkt)==0 && expected_size > len) {
-        return E_UNCONSISTENT;
+        return E_NOHEADER;
     }
 
     if (pkt_get_tr(pkt)==0 && pkt_get_type(pkt)==1) { // no truncated data type pkt
         size_t payload_size = pkt_get_length(pkt); // size of the payload in bytes
+
+        size_t expected_size = payload_size + header_size + 2*sizeof(uint32_t);
+        if (expected_size > len) {
+            return E_UNCONSISTENT;
+        }
 
         char * payload = malloc(payload_size);
 

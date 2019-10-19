@@ -19,6 +19,7 @@
 #include <time.h>
 #include "packet_interface.h"
 #include <errno.h>
+#include <poll.h>
 
 typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
@@ -41,6 +42,8 @@ char * port;
 struct addrinfo hints;
 struct addrinfo * servinfo;
 bool isSocketReady;
+socklen_t addrlen;
+struct sockaddr* dest_addr;
 
 uint8_t curr_seqnum;
 uint8_t window_end;
@@ -115,5 +118,7 @@ void removeFromSent(uint8_t seqnum);
  * Checks for each element in the buffer packet_send if the retransmission is expired, if it is, the pkt is resent.
  */
 void resendExpiredPkt();
+
+void printAsBinary(const char * buf, size_t len);
 
 #endif //FORMAT_SEGMENTS_SENDER_H
