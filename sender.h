@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "packet_interface.h"
+#include <errno.h>
 
 typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
@@ -92,6 +93,8 @@ status_code send_pkt(pkt_t * pkt);
  * from the buffer sent_packets, if the pkt is of type nack, the corresponding pkt is resent.
  */
 void emptySocket();
+
+status_code addToBuffer(pkt_t * pkt);
 
 /*
  * Checks the buffer for sent_pkt with the sequence number equal to seqnum.

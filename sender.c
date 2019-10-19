@@ -52,22 +52,6 @@ status_code reader(char * filename) {
     }
 }
 
-/*
-int * whichToResend() {
-    int * packetsToResend = malloc(32 * sizeof(int));
-    int i;
-    for (i=0; i<32; i++) {
-        if (time(NULL) - sent_packets[i].timer > retransmission_timer) {
-            packetsToResend[i] = i;
-        }
-        else {
-            packetsToResend[i] = -1;
-        }
-    }
-    return packetsToResend;
-}
-*/
-
 bool isToResend(uint8_t seqnum) {
     int i;
     for (i=0; i < 31 && sent_packets[i] != NULL; i++) {
@@ -76,6 +60,23 @@ bool isToResend(uint8_t seqnum) {
         }
     }
     return false;
+}
+
+status_code addToBuffer(pkt_t * pkt) {
+    buffer_t * sent_pkt = malloc(sizeof(buffer_t));
+    if(sent_pkt == NULL) {
+        return E_GENERIC;
+    }
+    sent_pkt->timer = time(NULL);
+    sent_pkt->seqnum = pkt_get_seqnum(pkt);
+    sent_pkt->pkt = pkt;
+    // adds the packet that was just sent to the buffer and sets the different struct fields
+
+    int i;
+    for(i=0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
+    sent_packets[i] = sent_pkt;
+
+    return STATUS_OK;
 }
 
 status_code send_pkt(pkt_t * pkt) {
@@ -90,22 +91,9 @@ status_code send_pkt(pkt_t * pkt) {
     }
     ssize_t sent = send(socket_fd, buf, size, 0);
     if (sent == -1) {
+        printf("Ernno : %d <=> %s \n", errno, strerror(errno));
         return E_SEND_PKT;
     }
-
-    curr_seqnum++;
-    buffer_t * sent_pkt = malloc(sizeof(buffer_t));
-    if(sent_pkt == NULL) {
-        return E_SEND_PKT;
-    }
-    sent_pkt->timer = time(NULL);
-    sent_pkt->seqnum = pkt_get_seqnum(pkt);
-    sent_pkt->pkt = pkt;
-    // adds the packet that was just sent to the buffer and sets the different struct fields
-
-    int i;
-    for(i=0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
-    sent_packets[i] = sent_pkt;
 
     return STATUS_OK;
 }
@@ -122,18 +110,16 @@ void removeFromSent(uint8_t seqnum) {
             nbShifted++;
         }
         if (nbShifted > 0) {
-            if(i < 31) { // pb fin
-                if(sent_packets[i] == NULL) { // the element was deleted
-                    int j;
-                    for(j = 0; j < nbShifted; j++) {
-                        if(i+1+j < 31) sent_packets[i-(nbShifted-1)+j] = NULL;
-                        else sent_packets[i-(nbShifted-1)+j] = sent_packets[i+1+j];
-                    } // so we shift accordingly the preceding packets
-                }
-                // and in any case (element deleted or not) we replace the packet by the shifted value
-                if (i+nbShifted < 31) sent_packets[i] = NULL;
-                else sent_packets[i] = sent_packets[i+nbShifted];
+            if(sent_packets[i] == NULL) { // the element was deleted
+                int j;
+                for(j = 0; j < nbShifted-1; j++) {
+                    if(i+1+j < 31) sent_packets[i-(nbShifted-1)+j] = NULL;
+                    else sent_packets[i-(nbShifted-1)+j] = sent_packets[i+1+j];
+                } // so we shift accordingly the preceding packets
             }
+            // and in any case (element deleted or not) we replace the packet by the shifted value
+            if (i+nbShifted >= 31) sent_packets[i] = NULL;
+            else sent_packets[i] = sent_packets[i+nbShifted];
         }
     } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
 
@@ -205,7 +191,7 @@ status_code sender(char * data, uint16_t len) {
         }
 
         int i;
-        for(i=0; i<32; i++) {
+        for(i=0; i<31; i++) {
             sent_packets[i] = NULL;
         }
         curr_seqnum=0;
@@ -234,12 +220,17 @@ status_code sender(char * data, uint16_t len) {
     pkt_t *pkt = pkt_new(); // creating a new empty packet
     pkt_set_type(pkt, 1);
     pkt_set_tr(pkt, 0);
-    pkt_set_window(pkt, (window_end + 1 - curr_seqnum)%255 );
+    pkt_set_window(pkt, 0);
     // handles the facts that the two variables cycle trough 0->255
     pkt_set_seqnum(pkt, curr_seqnum);
     pkt_set_timestamp(pkt, time(NULL));
     pkt_set_payload(pkt, data, len);
-    return send_pkt(pkt);
+    status_code status = send_pkt(pkt);
+    if(status == STATUS_OK) {
+        addToBuffer(pkt);
+        curr_seqnum++;
+    }
+    return status;
 }
 
 /*
