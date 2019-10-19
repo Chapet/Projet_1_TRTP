@@ -114,7 +114,7 @@ void removeFromSent(uint8_t seqnum) {
     int i;
     uint8_t nbShifted = 0;
     for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
-        if(sent_packets[i]->seqnum - seqnum >= 31) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
+        if(sent_packets[i]->seqnum - seqnum > 31) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
             free(sent_packets[i]->pkt->payload);
             free(sent_packets[i]->pkt);
             free(sent_packets[i]);
@@ -122,16 +122,16 @@ void removeFromSent(uint8_t seqnum) {
             nbShifted++;
         }
         if (nbShifted > 0) {
-            if(i <= 31) { // pb fin
+            if(i < 31) { // pb fin
                 if(sent_packets[i] == NULL) { // the element was deleted
                     int j;
                     for(j = 0; j < nbShifted; j++) {
-                        if(i+1+j <= 31) sent_packets[i-(nbShifted-1)+j] = NULL;
+                        if(i+1+j < 31) sent_packets[i-(nbShifted-1)+j] = NULL;
                         else sent_packets[i-(nbShifted-1)+j] = sent_packets[i+1+j];
                     } // so we shift accordingly the preceding packets
                 }
                 // and in any case (element deleted or not) we replace the packet by the shifted value
-                if (i+nbShifted <= 31) sent_packets[i] = NULL;
+                if (i+nbShifted < 31) sent_packets[i] = NULL;
                 else sent_packets[i] = sent_packets[i+nbShifted];
             }
         }
@@ -244,9 +244,6 @@ status_code sender(char * data, uint16_t len) {
 
 /*
  * implementer la window dynamique -> attention que quand on fait le tour/cycle, curr_seqnum > window_end peut être un pb
-
  *
  * tests
- *
- * pq window_end init à 30 ?????????????????????????????????????????????? (ceci est une question)
  */
