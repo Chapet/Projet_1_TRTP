@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <fcntl.h>
-#include "packet_interface.h"
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -18,8 +17,7 @@
 #include <netdb.h>
 #include <sys/time.h>
 #include <time.h>
-
-
+#include "packet_interface.h"
 
 typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
