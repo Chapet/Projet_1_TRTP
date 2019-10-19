@@ -54,7 +54,7 @@ int socket_fd;
 /*
  * Reads packet-sized data from the stdin or the file (if specified) until all the input has been "went trough"
  * after each read, the functions sends the packet trough the network to the specified destination with a call
- * to sender().
+ * to sender(). When all packets are sent, loop until the ack packets buffer is empty or a timeout occurs.
  *
  * @filename: the filename if specified, NULL otherwise.
  *

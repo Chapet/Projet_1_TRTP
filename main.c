@@ -3,7 +3,7 @@
 #include "sender.h"
 
 int main(const int argc, char * argv[]) {
-    if (argc < 3 || argc > 4) {
+    if (argc < 3 || argc > 5) {
         printf("Not enough or too much arguments\n");
         return EXIT_FAILURE;
     }
