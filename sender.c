@@ -26,9 +26,20 @@ status_code reader(char * filename) {
             return status;
         }
         nBytes = read(fd, &buf, 512); // reads again an a new value of nBytes is set
+    } // all the packets have been sent, but maybe not received correctly
+
+    time_t startEmptying = time(NULL);
+    while(time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
+        emptySocket();
+        resendExpiredPkt();
     }
 
     close(fd);
+    close(socket_fd);
+
+    if(sent_packets[0] != NULL) {
+        return E_TIMEOUT;
+    }
 
     //checking for errors linked to the reading of the fd
     if (nBytes == 0) {
@@ -217,7 +228,7 @@ status_code sender(char * data, uint16_t len) {
         emptySocket();
         resendExpiredPkt();
     }
-    if (curr_seqnum > window_end) {
+    if ((window_end - curr_seqnum) > 31) {
         return E_TIMEOUT;
     }
 
