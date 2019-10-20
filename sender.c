@@ -114,7 +114,7 @@ void removeFromSent(uint8_t seqnum) {
             if (sent_packets[i] == NULL) { // the element was deleted
                 int j;
                 for (j = 0; j < nbShifted - 1; j++) {
-                    if (i + 1 + j < 31) sent_packets[i - (nbShifted - 1) + j] = NULL;
+                    if (i + 1 + j >= 31) sent_packets[i - (nbShifted - 1) + j] = NULL;
                     else sent_packets[i - (nbShifted - 1) + j] = sent_packets[i + 1 + j];
                 } // so we shift accordingly the preceding packets
             }
@@ -149,15 +149,17 @@ void emptySocket() {
         pkt_set_seqnum(pkt, pkt_get_seqnum(pkt) - 1); // Supra-mystic line from nowhere => it works !!!!
 
         if (status == PKT_OK) {
-            if (pkt->Type == 2 && isToResend(pkt->Seqnum)) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
-                printf("Removing packet %d from sent_packets...\n", pkt->Seqnum);
-                removeFromSent(pkt->Seqnum); // the pkt has been acked and thus removed from the sent_packet buffer
-                printf("Packet %d removed from sent_packets !\n", pkt->Seqnum);
+            if (pkt_get_type(pkt) == 2 &&
+                isToResend(pkt_get_seqnum(pkt))) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
+                printf("Removing packet %d from sent_packets...\n", pkt_get_seqnum(pkt));
+                removeFromSent(
+                        pkt_get_seqnum(pkt)); // the pkt has been acked and thus removed from the sent_packet buffer
+                printf("Packet %d removed from sent_packets !\n", pkt_get_seqnum(pkt));
             } else if (pkt->Type == 3 &&
-                       isToResend(pkt->Seqnum)) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
-                printf("Resending packet %d ...\n", pkt->Seqnum);
+                       isToResend(pkt_get_seqnum(pkt))) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
+                printf("Resending packet %d ...\n", pkt_get_seqnum(pkt));
                 send_pkt(pkt); // the packet is not acked, it is re-sent
-                printf("Packet %d resent !\n", pkt->Seqnum);
+                printf("Packet %d resent !\n", pkt_get_seqnum(pkt));
             }
         }
         isAvailable = poll(&read_fd, 1, 1000);
@@ -207,6 +209,7 @@ status_code sender(char *data, uint16_t len) {
         }
         curr_seqnum = 0;
         window_end = 30;
+        recWindowFree = 1;
         retransmission_timer = 10;
         deadlock_timeout = 600; // 2 min timeout if nothing is received and we can't send anything
         isSocketReady = true;
@@ -233,7 +236,6 @@ status_code sender(char *data, uint16_t len) {
     pkt_set_type(pkt, 1);
     pkt_set_tr(pkt, 0);
     pkt_set_window(pkt, 0);
-    // handles the facts that the two variables cycle trough 0->255
     pkt_set_seqnum(pkt, curr_seqnum);
     pkt_set_timestamp(pkt, time(NULL));
     pkt_set_payload(pkt, data, len);

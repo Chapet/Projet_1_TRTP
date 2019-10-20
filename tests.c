@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include "../src/sender.h"
+#include "sender.h"
 
 int sender_setup(void) {
     return 0;

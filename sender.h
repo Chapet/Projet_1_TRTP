@@ -51,7 +51,8 @@ time_t retransmission_timer;
 time_t deadlock_timeout; // 2min timeout if nothing is received and we can't send anything
 struct timeval select_timeout;
 buffer_t *sent_packets[31];
-//uint8_t nbr_sent_packets=0;
+uint8_t recWindowFree;
+uint8_t curr_ack_seqnum;
 
 int socket_fd;
 
