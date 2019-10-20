@@ -1,7 +1,7 @@
 #include "sender.h"
 
 
-status_code reader(char * filename) {
+status_code reader(char *filename) {
 
     // open filename if fArg, stdin otherwise
     int fd = STDIN_FILENO; // stdin (== 0)
@@ -11,14 +11,14 @@ status_code reader(char * filename) {
             return E_FILENAME;
         }
     }
-    
+
     char buf[512]; // buffer of the data that is to become the payload
     // side-note : there is no need to free an variable that wasn't obtained via malloc()/calloc()/realloc()
     status_code status;
     ssize_t nBytes = read(fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
 
     // Read filename/stdin and send via sender
-    while(nBytes > 0) {
+    while (nBytes > 0) {
         status = sender(buf, nBytes); // sender is a blocking call, so each time we read a pkt to send we send it
         if (status != STATUS_OK) {
             close(fd);
@@ -28,7 +28,7 @@ status_code reader(char * filename) {
     } // all the packets have been sent, but maybe not received correctly
 
     time_t startEmptying = time(NULL);
-    while(time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
+    while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
         emptySocket();
         resendExpiredPkt();
     }
@@ -36,26 +36,24 @@ status_code reader(char * filename) {
     close(fd);
     close(socket_fd);
 
-    if(sent_packets[0] != NULL) {
+    if (sent_packets[0] != NULL) {
         return E_TIMEOUT;
     }
 
     //checking for errors linked to the reading of the fd
     if (nBytes == 0) {
         return STATUS_OK;
-    }
-    else if (nBytes < 0) {
+    } else if (nBytes < 0) {
         return E_READING;
-    }
-    else {
+    } else {
         return E_GENERIC;
     }
 }
 
 bool isToResend(uint8_t seqnum) {
     int i;
-    for (i=0; i < 31 && sent_packets[i] != NULL; i++) {
-        if (pkt_get_seqnum(sent_packets[i]->pkt)== seqnum) {
+    for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
+        if (pkt_get_seqnum(sent_packets[i]->pkt) == seqnum) {
             return true;
         }
     }
@@ -83,15 +81,16 @@ status_code addToBuffer(pkt_t * pkt) {
     // adds the packet that was just sent to the buffer and sets the different struct fields
 
     int i;
-    for(i=0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
+    for (i = 0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
     sent_packets[i] = sent_pkt;
 
     return STATUS_OK;
 }
 
-status_code send_pkt(pkt_t * pkt) {
-    size_t size = predict_header_length(pkt) + pkt_get_length(pkt) + 2* sizeof(uint32_t); // header + CRC1 + payload + CRC2
-    char * buf = malloc(size);
+status_code send_pkt(pkt_t *pkt) {
+    size_t size =
+            predict_header_length(pkt) + pkt_get_length(pkt) + 2 * sizeof(uint32_t); // header + CRC1 + payload + CRC2
+    char *buf = malloc(size);
     if (buf == NULL) {
         return E_SEND_PKT;
     }
@@ -122,18 +121,16 @@ void removeFromSent(uint8_t seqnum) {
             nbShifted++;
         }
         if (nbShifted > 0) {
-            if(sent_packets[i] == NULL) { // the element was deleted
+            if (sent_packets[i] == NULL) { // the element was deleted
                 int j;
-                for(j = 0; j < nbShifted-1; j++) {
-                    if(i+1+j < 31) {
-                        sent_packets[i-(nbShifted-1)+j] = NULL;
-                    }
-                    else sent_packets[i-(nbShifted-1)+j] = sent_packets[i+1+j];
+                for (j = 0; j < nbShifted - 1; j++) {
+                    if (i + 1 + j >= 31) sent_packets[i - (nbShifted - 1) + j] = NULL;
+                    else sent_packets[i - (nbShifted - 1) + j] = sent_packets[i + 1 + j];
                 } // so we shift accordingly the preceding packets
             }
             // and in any case (element deleted or not) we replace the packet by the shifted value
-            if (i+nbShifted >= 31) sent_packets[i] = NULL;
-            else sent_packets[i] = sent_packets[i+nbShifted];
+            if (i + nbShifted >= 31) sent_packets[i] = NULL;
+            else sent_packets[i] = sent_packets[i + nbShifted];
         }
     } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
 }
@@ -148,7 +145,7 @@ void emptySocket() {
     struct pollfd read_fd = {socket_fd, POLLIN};
     int isAvailable = poll(&read_fd, 1, 500);
 
-    char * buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
+    char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
         return;
     }
@@ -200,9 +197,9 @@ void resendExpiredPkt() {
 }
 
 
-status_code sender(char * data, uint16_t len) {
+status_code sender(char *data, uint16_t len) {
 
-    if(!isSocketReady) { // the socket has not been initialized yet
+    if (!isSocketReady) { // the socket has not been initialized yet
         socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
         if (socket_fd == -1) {
             return E_CONNECT;
@@ -226,11 +223,12 @@ status_code sender(char * data, uint16_t len) {
 
 
         int i;
-        for(i=0; i<31; i++) {
+        for (i = 0; i < 31; i++) {
             sent_packets[i] = NULL;
         }
-        curr_seqnum=0;
-        window_end=30;
+        curr_seqnum = 0;
+        window_end = 30;
+        recWindowFree = 1;
         retransmission_timer = 10;
         deadlock_timeout = 600; // 2 min timeout if nothing is received and we can't send anything
         isSocketReady = true;
@@ -256,7 +254,6 @@ status_code sender(char * data, uint16_t len) {
     pkt_set_type(pkt, 1);
     pkt_set_tr(pkt, 0);
     pkt_set_window(pkt, 0);
-    // handles the facts that the two variables cycle trough 0->255
     pkt_set_seqnum(pkt, curr_seqnum);
     pkt_set_timestamp(pkt, time(NULL));
     pkt_set_payload(pkt, data, len);
@@ -269,16 +266,16 @@ status_code sender(char * data, uint16_t len) {
     return status;
 }
 
-void printAsBinary(const char * buf, size_t len) {
+void printAsBinary(const char *buf, size_t len) {
     printf("Buf as binary : ");
     int i;
-    for(i=0; i<len; i++) {
+    for (i = 0; i < len; i++) {
         int j;
-        for(j=0; j<8; j++) {
-            uint8_t tmp = *(buf+i);
-            tmp = tmp >> (7-j);
+        for (j = 0; j < 8; j++) {
+            uint8_t tmp = *(buf + i);
+            tmp = tmp >> (7 - j);
             tmp = tmp & 0b00000001;
-            if(tmp) printf("1");
+            if (tmp) printf("1");
             else printf("0");
         }
         printf(" ");
