@@ -62,6 +62,16 @@ bool isToResend(uint8_t seqnum) {
     return false;
 }
 
+pkt_t * getFromBuffer(uint8_t seqnum) {
+    int i;
+    for (i=0; i < 31 && sent_packets[i] != NULL; i++) {
+        if (pkt_get_seqnum(sent_packets[i]->pkt)== seqnum) {
+            return sent_packets[i]->pkt;
+        }
+    }
+    return NULL;
+}
+
 status_code addToBuffer(pkt_t * pkt) {
     buffer_t * sent_pkt = malloc(sizeof(buffer_t));
     if(sent_pkt == NULL) {
@@ -89,22 +99,23 @@ status_code send_pkt(pkt_t * pkt) {
     if (status != PKT_OK) {
         return E_SEND_PKT;
     }
-    printAsBinary(buf, size);
-    ssize_t sent = sendto(socket_fd, buf, size, 0, dest_addr, addrlen);
+    //printAsBinary(buf, size);
+    ssize_t sent = send(socket_fd, buf, size, 0);
     if (sent == -1) {
         printf("Ernno : %d <=> %s \n", errno, strerror(errno));
         return E_SEND_PKT;
     }
-
-    printf("Packet %d sent !\n", pkt->Seqnum);
     return STATUS_OK;
 }
 
 void removeFromSent(uint8_t seqnum) {
     int i;
+    seqnum = seqnum - 1; //removing until seqnum EXCLUDED
     uint8_t nbShifted = 0;
     for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
-        if(sent_packets[i]->seqnum - seqnum > 31 || sent_packets[i]->seqnum == seqnum) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
+
+        if((uint8_t)(sent_packets[i]->seqnum - seqnum) > 31u || sent_packets[i]->seqnum == seqnum) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
+            printf("Deleting packet %d ..\n", sent_packets[i]->pkt->Seqnum);
             pkt_del(sent_packets[i]->pkt);
             free(sent_packets[i]);
             sent_packets[i] = NULL;
@@ -114,7 +125,9 @@ void removeFromSent(uint8_t seqnum) {
             if(sent_packets[i] == NULL) { // the element was deleted
                 int j;
                 for(j = 0; j < nbShifted-1; j++) {
-                    if(i+1+j < 31) sent_packets[i-(nbShifted-1)+j] = NULL;
+                    if(i+1+j < 31) {
+                        sent_packets[i-(nbShifted-1)+j] = NULL;
+                    }
                     else sent_packets[i-(nbShifted-1)+j] = sent_packets[i+1+j];
                 } // so we shift accordingly the preceding packets
             }
@@ -123,7 +136,6 @@ void removeFromSent(uint8_t seqnum) {
             else sent_packets[i] = sent_packets[i+nbShifted];
         }
     } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
-
 }
 
 void emptySocket() {
@@ -143,20 +155,30 @@ void emptySocket() {
 
     while (isAvailable > 0) {
         recv(socket_fd, buf, 11, 0); // rcv 11 bytes from the socket
-        printAsBinary(buf, 11);
+        //printAsBinary(buf, 11);
         pkt_t * pkt = pkt_new();
         pkt_status_code status = pkt_decode(buf, 11, pkt);
-        pkt_set_seqnum(pkt, pkt_get_seqnum(pkt)-1); // Supra-mystic line from nowhere => it works !!!!
+        //pkt_set_seqnum(pkt, pkt_get_seqnum(pkt)-1); // Supra-mystic line from nowhere => it works !!!!
 
         if (status == PKT_OK) {
-            if (pkt->Type == 2 && isToResend(pkt->Seqnum)) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
-                printf("Removing packet %d from sent_packets...\n", pkt->Seqnum);
+            pkt_t * toResend = getFromBuffer(pkt->Seqnum);
+            printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
+            if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
+                //printf("Removing packet %d from sent_packets...\n", pkt->Seqnum);
                 removeFromSent(pkt->Seqnum); // the pkt has been acked and thus removed from the sent_packet buffer
-                printf("Packet %d removed from sent_packets !\n", pkt->Seqnum);
+                /*
+                 * Could be implemented :
+                 * watching number of occurrences of an ack in order to resend the corresponding pkt
+                if(toResend != NULL) {
+                    send_pkt(toResend);
+                    printf("Packet %d resent ! (in emptySocket())\n", toResend->Seqnum);
+                }
+                 */
+                printf("Packets until %d removed from sent_packets !\n", pkt->Seqnum);
             }
-            else if (pkt->Type == 3 && isToResend(pkt->Seqnum)) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
-                printf("Resending packet %d ...\n", pkt->Seqnum);
-                send_pkt(pkt); // the packet is not acked, it is re-sent
+            else if (pkt->Type == 3 && toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
+                //printf("Resending packet %d ...\n", pkt->Seqnum);
+                send_pkt(toResend); // the packet is not acked, it is re-sent
                 printf("Packet %d resent !\n", pkt->Seqnum);
             }
         }
@@ -170,6 +192,8 @@ void resendExpiredPkt() {
     int i;
     for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
         if((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
+            //printf("Resending packet %d ...\n", sent_packets[i]->pkt->Seqnum);
+            printf("Packet %d has expired !\n", sent_packets[i]->pkt->Seqnum);
             send_pkt(sent_packets[i]->pkt);
         }
     }
@@ -195,11 +219,11 @@ status_code sender(char * data, uint16_t len) {
         addrlen = servinfo->ai_addrlen;
         dest_addr = servinfo->ai_addr;
 
-        /*
+
         if (connect(socket_fd, dest_addr, addrlen) == -1) {
             return E_CONNECT;
         }
-        */
+
 
         int i;
         for(i=0; i<31; i++) {
@@ -215,7 +239,6 @@ status_code sender(char * data, uint16_t len) {
     emptySocket();
     resendExpiredPkt();
     time_t start = time(NULL);
-
     /* (window_end - curr_seqnum) > 31 : it just means that curr_seqnum > window_end, but handles the case where
      * curr_seqnum = window_end + 1 -> the difference is 255 (> 31)
      */
@@ -239,6 +262,7 @@ status_code sender(char * data, uint16_t len) {
     pkt_set_payload(pkt, data, len);
     status_code status = send_pkt(pkt);
     if(status == STATUS_OK) {
+        printf("Packet %d sent !\n", pkt->Seqnum);
         addToBuffer(pkt);
         curr_seqnum++;
     }

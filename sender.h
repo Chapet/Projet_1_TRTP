@@ -108,6 +108,8 @@ status_code addToBuffer(pkt_t * pkt);
  */
 bool isToResend(uint8_t seqnum);
 
+pkt_t * getFromBuffer(uint8_t seqnum);
+
 /*
  * Checks the buffer for sent_pkt with the sequence number equal to seqnum, and if it is found, the pkt is
  * removed (freed).
