@@ -33,24 +33,24 @@ typedef enum { // possible errors encountered in sender.c
 
 typedef struct buffer {
     time_t timer;
-    pkt_t * pkt;
+    pkt_t *pkt;
     uint8_t seqnum;
 } buffer_t;
 
-char * hostname;
-char * port;
+char *hostname;
+char *port;
 struct addrinfo hints;
-struct addrinfo * servinfo;
+struct addrinfo *servinfo;
 bool isSocketReady;
 socklen_t addrlen;
-struct sockaddr* dest_addr;
+struct sockaddr *dest_addr;
 
 uint8_t curr_seqnum;
 uint8_t window_end;
 time_t retransmission_timer;
 time_t deadlock_timeout; // 2min timeout if nothing is received and we can't send anything
 struct timeval select_timeout;
-buffer_t * sent_packets[31];
+buffer_t *sent_packets[31];
 //uint8_t nbr_sent_packets=0;
 
 int socket_fd;
@@ -64,7 +64,7 @@ int socket_fd;
  *
  * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
  */
-status_code reader(char * filename);
+status_code reader(char *filename);
 
 /*
  * If the socket and global variables are not ready yet initializes them.
@@ -77,7 +77,7 @@ status_code reader(char * filename);
  *
  * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
  */
-status_code sender(char * data, uint16_t len);
+status_code sender(char *data, uint16_t len);
 
 /*
  * Encodes the pkt, sends it on the socket, increments curr_seqnum and adds the pkt to the buffer sent_packets
@@ -87,7 +87,7 @@ status_code sender(char * data, uint16_t len);
  *
  * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
  */
-status_code send_pkt(pkt_t * pkt);
+status_code send_pkt(pkt_t *pkt);
 
 //int * whichToResend();
 
@@ -97,7 +97,7 @@ status_code send_pkt(pkt_t * pkt);
  */
 void emptySocket();
 
-status_code addToBuffer(pkt_t * pkt);
+status_code addToBuffer(pkt_t *pkt);
 
 /*
  * Checks the buffer for sent_pkt with the sequence number equal to seqnum.
@@ -119,6 +119,6 @@ void removeFromSent(uint8_t seqnum);
  */
 void resendExpiredPkt();
 
-void printAsBinary(const char * buf, size_t len);
+void printAsBinary(const char *buf, size_t len);
 
 #endif //FORMAT_SEGMENTS_SENDER_H

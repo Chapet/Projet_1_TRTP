@@ -10,9 +10,11 @@
 int sender_setup(void) {
     return 0;
 }
+
 int sender_teardown(void) {
     return 0;
 }
+
 void sender_test(void) {
     return;
 }
@@ -33,8 +35,7 @@ int main(int argc, char *argv[]) {
         return CU_get_error();
     }
 
-    if (NULL == CU_add_test(pSenderSuite, "Test sender", sender_test))
-    {
+    if (NULL == CU_add_test(pSenderSuite, "Test sender", sender_test)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
