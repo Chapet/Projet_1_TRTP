@@ -134,7 +134,7 @@ void removeFromSent(uint8_t expected_seq) {
 
 status_code emptySocket() {
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
-    int isAvailable = poll(&read_fd, 1, 100);
+    int isAvailable = poll(&read_fd, 1, 10);
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
@@ -151,22 +151,24 @@ status_code emptySocket() {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             //printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
-                if(fastRetrans.ack_seq == pkt->Seqnum) {
-                    fastRetrans.occ++;
-                }
-                else {
-                    printf("New ACK for PKT_SEQ %d\n", pkt->Type, pkt->Seqnum);
-                    fastRetrans.ack_seq = pkt->Seqnum;
-                }
-                if(toResend != NULL && fastRetrans.occ >= 3) {
-                    send_pkt(toResend);
-                }
-
                 if(isUsefulAck(pkt->Seqnum)) {
+
                     //printf("Removing until PKT_SEQ %d\n", pkt->Seqnum);
                     removeFromSent(pkt->Seqnum);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
+                }
+                else {
+                    if(fastRetrans.ack_seq == pkt->Seqnum) {
+                        fastRetrans.occ++;
+                    }
+                    else {
+                        printf("New ACK for PKT_SEQ %d\n", pkt->Seqnum);
+                        fastRetrans.ack_seq = pkt->Seqnum;
+                    }
+                    if(toResend != NULL && fastRetrans.occ >= 3) {
+                        send_pkt(toResend);
+                    }
                 }
                 /*
                 if ((uint8_t)(expected_seqnum - pkt_get_seqnum(pkt)) >= 31u && ()) {
@@ -181,7 +183,7 @@ status_code emptySocket() {
                 printf("Packet %d resent !\n", pkt->Seqnum);
             }
         }
-        isAvailable = poll(&read_fd, 1, 100);
+        isAvailable = poll(&read_fd, 1, 10);
     }
 
     pkt_del(pkt);
@@ -268,7 +270,7 @@ status_code init(char *filename) {
     expected_seqnum = 0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 4;
+    retransmission_timer = 2;
     already_sent = 0;
     deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
     isSocketReady = true;
