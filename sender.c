@@ -150,7 +150,7 @@ void emptySocket() {
     FD_SET(socket_fd, &read_fd); // adds the fd socket_fd to the set
     int isAvailable = select(1, &read_fd, NULL, NULL, &select_timeout);
      */
-    struct pollfd read_fd = {socket_fd, POLLIN};
+    struct pollfd read_fd = {socket_fd, POLLIN, 0};
     int isAvailable = poll(&read_fd, 1, 500);
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
