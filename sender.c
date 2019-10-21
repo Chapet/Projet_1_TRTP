@@ -109,7 +109,6 @@ status_code send_pkt(pkt_t *pkt) {
     if (status != PKT_OK) {
         return E_SEND_PKT;
     }
-    //printAsBinary(buf, size);
     ssize_t sent = send(socket_fd, buf, size, 0);
     if (sent == -1) {
         printf("Ernno : %d <=> %s \n", errno, strerror(errno));
@@ -149,12 +148,6 @@ void removeFromSent(uint8_t seqnum) {
 }
 
 void emptySocket() {
-    /*
-    fd_set read_fd;
-    FD_ZERO(&read_fd); // clears the set
-    FD_SET(socket_fd, &read_fd); // adds the fd socket_fd to the set
-    int isAvailable = select(1, &read_fd, NULL, NULL, &select_timeout);
-     */
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
     int isAvailable = poll(&read_fd, 1, 500);
 
@@ -165,9 +158,7 @@ void emptySocket() {
     pkt_t * pkt = pkt_new();
     while (isAvailable > 0 || recWindowFree == 0) {
         recv(socket_fd, buf, 11, 0); // rcv 11 bytes from the socket
-        //printAsBinary(buf, 11);
         pkt_status_code status = pkt_decode(buf, 11, pkt);
-        //pkt_set_seqnum(pkt, pkt_get_seqnum(pkt)-1); // Supra-mystic line from nowhere => it works !!!!
         if ((uint8_t) (pkt_get_seqnum(pkt) - curr_ack_seqnum) >= 31u) {
             curr_ack_seqnum = pkt_get_seqnum(pkt);
             recWindowFree = pkt_get_window(pkt);
@@ -177,23 +168,13 @@ void emptySocket() {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
-                //printf("Removing packet %d from sent_packets...\n", pkt->Seqnum);
                 removeFromSent(pkt->Seqnum); // the pkt has been acked and thus removed from the sent_packet buffer
                 if(isFinished && pkt->Seqnum == 0) {
                     removeFromSent(1);
                     return;
                 }
-                /*
-                 * Could be implemented :
-                 * watching number of occurrences of an ack in order to resend the corresponding pkt
-                if(toResend != NULL) {
-                    send_pkt(toResend);
-                    printf("Packet %d resent ! (in emptySocket())\n", toResend->Seqnum);
-                }
-                 */
                 printf("Packets until %d removed from sent_packets !\n", pkt->Seqnum);
             } else if (pkt->Type == 3 && toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
-                //printf("Resending packet %d ...\n", pkt->Seqnum);
                 send_pkt(toResend); // the packet is not acked, it is re-sent
                 printf("Packet %d resent !\n", pkt->Seqnum);
             }
@@ -208,7 +189,6 @@ void resendExpiredPkt() {
     int i;
     for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
         if((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
-            //printf("Resending packet %d ...\n", sent_packets[i]->pkt->Seqnum);
             printf("Packet %d has expired !\n", sent_packets[i]->pkt->Seqnum);
             send_pkt(sent_packets[i]->pkt);
         }
@@ -285,26 +265,3 @@ status_code sender(char *data, uint16_t len) {
     }
     return status;
 }
-/*
-void printAsBinary(const char *buf, size_t len) {
-    printf("Buf as binary : ");
-    int i;
-    for (i = 0; i < len; i++) {
-        int j;
-        for (j = 0; j < 8; j++) {
-            uint8_t tmp = *(buf + i);
-            tmp = tmp >> (7 - j);
-            tmp = tmp & 0b00000001;
-            if (tmp) printf("1");
-            else printf("0");
-        }
-        printf(" ");
-    }
-    printf("\n");
-}
-*/
-/*
- * implementer la window dynamique -> attention que quand on fait le tour/cycle, curr_seqnum > window_end peut être un pb
- *
- * tests
- */
