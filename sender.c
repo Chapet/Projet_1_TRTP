@@ -27,10 +27,6 @@ status_code reader(char *filename) {
         }
         nBytes = read(fd, &buf, 512); // reads again an a new value of nBytes is set
     } // all the packets have been sent, but maybe not received correctly
-    isFinished = true;
-
-    printf("Sending EOF packet \n");
-    sender(NULL, 0);
 
     time_t startEmptying = time(NULL);
     while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
@@ -38,7 +34,15 @@ status_code reader(char *filename) {
         resendExpiredPkt();
     }
 
+    isFinished = true;
+    printf("Sending EOF packet \n");
+    sender(NULL, 0);
 
+    startEmptying = time(NULL);
+    while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
+        emptySocket();
+        resendExpiredPkt();
+    }
 
     close(fd);
     close(socket_fd);
