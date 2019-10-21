@@ -29,6 +29,7 @@ status_code reader(char *filename) {
     } // all the packets have been sent, but maybe not received correctly
     isFinished = true;
 
+    printf("Sending EOF packet \n");
     sender(NULL, 0);
 
     time_t startEmptying = time(NULL);
