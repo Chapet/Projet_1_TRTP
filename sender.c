@@ -32,6 +32,7 @@ status_code scheduler(char *filename) {
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
+                emptyBuffer();
                 if (sendLastPacket() != STATUS_OK) return E_LAST_PKT;
                 break;
             }
@@ -111,7 +112,6 @@ void removeFromSent() {
         // Sadly, not watching if an ack is relevant meaning between window start and end (cycling included)
         if ((uint8_t) (sent_packets[i]->seqnum - seqnum) > 31u ||
             sent_packets[i]->seqnum == seqnum) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
-            printf("Deleting packet %d ..\n", sent_packets[i]->pkt->Seqnum);
             pkt_del(sent_packets[i]->pkt);
             free(sent_packets[i]);
             sent_packets[i] = NULL;
@@ -130,6 +130,7 @@ void removeFromSent() {
             else sent_packets[i] = sent_packets[i + nbShifted];
         }
     } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
+    if (seqnum>0) printf("Packets removed from buffer until Seqnum %d included\n", seqnum);
 }
 
 status_code emptySocket() {
@@ -148,9 +149,9 @@ status_code emptySocket() {
 
         if (status == PKT_OK) {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
-            printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
+            //printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
-                if ((uint8_t) (pkt_get_seqnum(pkt) - expected_seqnum) >= recWindowFree) {
+                if ((uint8_t) (pkt_get_seqnum(pkt) - expected_seqnum) <= recWindowFree) {
                     expected_seqnum = pkt_get_seqnum(pkt);
                     recWindowFree = pkt_get_window(pkt);
                     already_sent = 0;
@@ -259,7 +260,6 @@ status_code emptyBuffer() {
         removeFromSent();
         resendExpiredPkt();
     }
-    close_fds();
     if (sent_packets[0] != NULL) return E_TIMEOUT;
     else return STATUS_OK;
 }
