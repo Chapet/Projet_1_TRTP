@@ -53,6 +53,7 @@ struct timeval select_timeout;
 buffer_t *sent_packets[31];
 uint8_t recWindowFree;
 uint8_t curr_ack_seqnum;
+bool isFinished;
 
 int socket_fd;
 

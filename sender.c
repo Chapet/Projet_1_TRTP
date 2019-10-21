@@ -13,6 +13,7 @@ status_code reader(char *filename) {
     }
 
     char buf[512]; // buffer of the data that is to become the payload
+    isFinished = false;
     // side-note : there is no need to free an variable that wasn't obtained via malloc()/calloc()/realloc()
     status_code status;
     ssize_t nBytes = read(fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
@@ -26,6 +27,7 @@ status_code reader(char *filename) {
         }
         nBytes = read(fd, &buf, 512); // reads again an a new value of nBytes is set
     } // all the packets have been sent, but maybe not received correctly
+    isFinished = true;
 
     sender(NULL, 0);
 
@@ -172,6 +174,10 @@ void emptySocket() {
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
                 //printf("Removing packet %d from sent_packets...\n", pkt->Seqnum);
                 removeFromSent(pkt->Seqnum); // the pkt has been acked and thus removed from the sent_packet buffer
+                if(isFinished && pkt->Seqnum == 0) {
+                    removeFromSent(1);
+                    return;
+                }
                 /*
                  * Could be implemented :
                  * watching number of occurrences of an ack in order to resend the corresponding pkt
@@ -238,8 +244,8 @@ status_code sender(char *data, uint16_t len) {
         curr_ack_seqnum = 0;
         window_end = 30;
         recWindowFree = 1;
-        retransmission_timer = 10;
-        deadlock_timeout = 600; // 2 min timeout if nothing is received and we can't send anything
+        retransmission_timer = 4;
+        deadlock_timeout = 120; // 2 min timeout if nothing is received and we can't send anything
         isSocketReady = true;
     } // socket ready & global variables initialized
 
