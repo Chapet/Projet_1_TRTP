@@ -152,7 +152,7 @@ void emptySocket() {
     int isAvailable = select(1, &read_fd, NULL, NULL, &select_timeout);
      */
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
-    int isAvailable = poll(&read_fd, 1, 500);
+    int isAvailable = poll(&read_fd, 1, 10);
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
@@ -245,7 +245,7 @@ status_code sender(char *data, uint16_t len) {
         curr_ack_seqnum = 0;
         window_end = 30;
         recWindowFree = 1;
-        retransmission_timer = 4;
+        retransmission_timer = 3;
         deadlock_timeout = 120; // 2 min timeout if nothing is received and we can't send anything
         isSocketReady = true;
     } // socket ready & global variables initialized
