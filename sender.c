@@ -16,10 +16,10 @@ status_code scheduler(char *filename) {
             close_fds();
             return status;
         }
-        removeFromSent();
+        if (already_sent==0) removeFromSent();
         resendExpiredPkt();
 
-        while ((recWindowFree - already_sent) > 0) {
+        while ((recWindowFree - already_sent) > 0 ) {
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
             if (nBytes > 0) {
@@ -130,12 +130,12 @@ void removeFromSent() {
             else sent_packets[i] = sent_packets[i + nbShifted];
         }
     } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
-    if (seqnum>0) printf("Packets removed from buffer until Seqnum %d included\n", seqnum);
+    if (seqnum>0) printf("Packets removed until PKT_SEQ %d \n", seqnum);
 }
 
 status_code emptySocket() {
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
-    int isAvailable = poll(&read_fd, 1, 10);
+    int isAvailable = poll(&read_fd, 1, 100);
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
@@ -148,10 +148,11 @@ status_code emptySocket() {
         pkt_status_code status = pkt_decode(buf, 11, pkt);
 
         if (status == PKT_OK) {
+            printf("PKT_TYPE %d for PKT_SEQ %d\n", pkt->Type, pkt->Seqnum);
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             //printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
-                if ((uint8_t) (pkt_get_seqnum(pkt) - expected_seqnum) <= recWindowFree) {
+                if ((uint8_t) (expected_seqnum - pkt_get_seqnum(pkt)) >= 31u) {
                     expected_seqnum = pkt_get_seqnum(pkt);
                     recWindowFree = pkt_get_window(pkt);
                     already_sent = 0;
@@ -161,17 +162,19 @@ status_code emptySocket() {
                 printf("Packet %d resent !\n", pkt->Seqnum);
             }
         }
-        isAvailable = poll(&read_fd, 1, 10);
+        isAvailable = poll(&read_fd, 1, 100);
     }
 
     pkt_del(pkt);
     free(buf);
 
+    /*
     if (recWindowFree == 0) {
         isAvailable = poll(&read_fd, 1, deadlock_timeout);
-        if (!isAvailable) return E_TIMEOUT;
+        if (isAvailable <= 0) return E_TIMEOUT;
         else emptySocket();
     }
+     */
 
     return STATUS_OK;
 }
