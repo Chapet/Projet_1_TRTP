@@ -54,6 +54,12 @@ buffer_t *sent_packets[31];
 uint8_t recWindowFree;
 uint8_t curr_ack_seqnum;
 bool isFinished;
+typedef struct retransmitter
+{
+    uint8_t ack;
+    int occ;
+}retransmitter_t;
+retransmitter_t retrans;
 
 int socket_fd;
 

@@ -35,7 +35,7 @@ status_code reader(char *filename) {
     }
 
     isFinished = true;
-    printf("Sending EOF packet \n");
+    printf("Sending EOF packet with seqnum : %d\n", curr_seqnum);
     sender(NULL, 0);
 
     startEmptying = time(NULL);
@@ -131,6 +131,7 @@ void removeFromSent(uint8_t seqnum) {
             pkt_del(sent_packets[i]->pkt);
             free(sent_packets[i]);
             sent_packets[i] = NULL;
+            window_end++;
             nbShifted++;
         }
         if (nbShifted > 0) {
@@ -156,7 +157,7 @@ void emptySocket() {
     int isAvailable = select(1, &read_fd, NULL, NULL, &select_timeout);
      */
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
-    int isAvailable = poll(&read_fd, 1, 10);
+    int isAvailable = poll(&read_fd, 1, 1);
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
@@ -176,8 +177,22 @@ void emptySocket() {
         if (status == PKT_OK) {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
+
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
                 //printf("Removing packet %d from sent_packets...\n", pkt->Seqnum);
+                if(pkt->Seqnum == retrans.ack) {
+                    retrans.occ++;
+                }
+                else {
+                    retrans.ack = pkt->Seqnum;
+                }
+
+                if(retrans.occ >= 3 && toResend!=NULL) {
+                    retrans.occ=0;
+                    printf("Fast retransmitting packet %d\n", retrans.ack);
+                    send_pkt(toResend);
+                }
+
                 removeFromSent(pkt->Seqnum); // the pkt has been acked and thus removed from the sent_packet buffer
                 if(isFinished && pkt->Seqnum == 0) {
                     removeFromSent(1);
@@ -249,9 +264,10 @@ status_code sender(char *data, uint16_t len) {
         curr_ack_seqnum = 0;
         window_end = 30;
         recWindowFree = 1;
-        retransmission_timer = 3;
-        deadlock_timeout = 120; // 2 min timeout if nothing is received and we can't send anything
+        retransmission_timer = 4;
+        deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
         isSocketReady = true;
+        retrans = (retransmitter_t){0, 0};
     } // socket ready & global variables initialized
 
     emptySocket();
@@ -260,7 +276,7 @@ status_code sender(char *data, uint16_t len) {
     /* (window_end - curr_seqnum) > 31 : it just means that curr_seqnum > window_end, but handles the case where
      * curr_seqnum = window_end + 1 -> the difference is 255 (> 31)
      */
-    while (time(NULL) - start < deadlock_timeout && (uint8_t)(window_end - curr_seqnum) > 31u && recWindowFree==0) {
+    while (time(NULL) - start < deadlock_timeout && (uint8_t)(window_end - curr_seqnum) > 31u) {
         emptySocket();
         resendExpiredPkt();
     }
