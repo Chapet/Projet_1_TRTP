@@ -25,10 +25,10 @@ typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
     E_GENERIC = 1,
     E_FILENAME,
-    E_READING,
     E_CONNECT,
     E_TIMEOUT,
-    E_SEND_PKT
+    E_SEND_PKT,
+    E_LAST_PKT
 } status_code;
 
 typedef struct buffer {
@@ -46,16 +46,18 @@ socklen_t addrlen;
 struct sockaddr *dest_addr;
 
 uint8_t curr_seqnum;
-uint8_t window_end;
+//uint8_t window_end;
 time_t retransmission_timer;
 time_t deadlock_timeout; // 2min timeout if nothing is received and we can't send anything
 struct timeval select_timeout;
 buffer_t *sent_packets[31];
 uint8_t recWindowFree;
-uint8_t curr_ack_seqnum;
+uint8_t expected_seqnum;
+uint8_t already_sent;
 bool isFinished;
 
 int socket_fd;
+int file_fd;
 
 /*
  * Reads packet-sized data from the stdin or the file (if specified) until all the input has been "went trough"
@@ -66,7 +68,7 @@ int socket_fd;
  *
  * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
  */
-status_code reader(char *filename);
+status_code scheduler(char *filename);
 
 /*
  * If the socket and global variables are not ready yet initializes them.
@@ -97,7 +99,7 @@ status_code send_pkt(pkt_t *pkt);
  * Empties the socket from the received ack packets. If the pkt is of type ack, the corresponding element is removed
  * from the buffer sent_packets, if the pkt is of type nack, the corresponding pkt is resent.
  */
-void emptySocket();
+status_code emptySocket();
 
 status_code addToBuffer(pkt_t *pkt);
 
@@ -116,7 +118,7 @@ pkt_t * getFromBuffer(uint8_t seqnum);
  * Checks the buffer for sent_pkt with the sequence number equal to seqnum, and if it is found, the pkt is
  * removed (freed).
  */
-void removeFromSent(uint8_t seqnum);
+void removeFromSent();
 
 /*
  * Checks for each element in the buffer packet_send if the retransmission is expired, if it is, the pkt is resent.
@@ -124,5 +126,13 @@ void removeFromSent(uint8_t seqnum);
 void resendExpiredPkt();
 
 //void printAsBinary(const char *buf, size_t len);
+
+status_code init(char * filename);
+
+status_code emptyBuffer();
+
+status_code sendLastPacket();
+
+void close_fds();
 
 #endif //FORMAT_SEGMENTS_SENDER_H

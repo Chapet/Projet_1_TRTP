@@ -1,64 +1,48 @@
 #include "sender.h"
 
 
-status_code reader(char *filename) {
+status_code scheduler(char *filename) {
 
-    // open filename if fArg, stdin otherwise
-    int fd = STDIN_FILENO; // stdin (== 0)
-    if (filename != NULL) { // arg -f not specified
-        fd = open(filename, O_RDONLY); // opening the fd in read-only
-        if (fd < 0) {
-            return E_FILENAME;
-        }
-    }
-
-    char buf[512]; // buffer of the data that is to become the payload
-    isFinished = false;
+    status_code init_ret = init(filename);
+    if (init_ret != STATUS_OK) return init_ret;
     // side-note : there is no need to free an variable that wasn't obtained via malloc()/calloc()/realloc()
-    status_code status;
-    ssize_t nBytes = read(fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
 
-    // Read filename/stdin and send via sender
-    while (nBytes > 0) {
-        status = sender(buf, nBytes); // sender is a blocking call, so each time we read a pkt to send we send it
+    char buf[512];
+    time_t start = time(NULL);
+    while (!isFinished && time(NULL) - start < deadlock_timeout) {
+
+        status_code status = emptySocket();
         if (status != STATUS_OK) {
-            close(fd);
+            close_fds();
             return status;
         }
-        nBytes = read(fd, &buf, 512); // reads again an a new value of nBytes is set
-    } // all the packets have been sent, but maybe not received correctly
-
-    time_t startEmptying = time(NULL);
-    while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
-        emptySocket();
+        removeFromSent();
         resendExpiredPkt();
+
+        while ((recWindowFree - already_sent) > 0) {
+            ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
+            // Read filename/stdin and send via sender
+            if (nBytes > 0) {
+                status = sender(buf,
+                                nBytes); // sender is a blocking call, so each time we read a pkt to send we send it
+                if (status != STATUS_OK) {
+                    close_fds();
+                    return status;
+                }
+            } // all the packets have been sent, but maybe not received correctly
+            else {
+                isFinished = true;
+                if (sendLastPacket() != STATUS_OK) return E_LAST_PKT;
+                break;
+            }
+            start = time(NULL);
+        }
     }
-
-    isFinished = true;
-    printf("Sending EOF packet \n");
-    sender(NULL, 0);
-
-    startEmptying = time(NULL);
-    while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
-        emptySocket();
-        resendExpiredPkt();
-    }
-
-    close(fd);
-    close(socket_fd);
-
-    if (sent_packets[0] != NULL) {
+    if (!isFinished) {
         return E_TIMEOUT;
     }
 
-    //checking for errors linked to the reading of the fd
-    if (nBytes == 0) {
-        return STATUS_OK;
-    } else if (nBytes < 0) {
-        return E_READING;
-    } else {
-        return E_GENERIC;
-    }
+    return emptyBuffer();
 }
 
 bool isToResend(uint8_t seqnum) {
@@ -71,19 +55,19 @@ bool isToResend(uint8_t seqnum) {
     return false;
 }
 
-pkt_t * getFromBuffer(uint8_t seqnum) {
+pkt_t *getFromBuffer(uint8_t seqnum) {
     int i;
-    for (i=0; i < 31 && sent_packets[i] != NULL; i++) {
-        if (pkt_get_seqnum(sent_packets[i]->pkt)== seqnum) {
+    for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
+        if (pkt_get_seqnum(sent_packets[i]->pkt) == seqnum) {
             return sent_packets[i]->pkt;
         }
     }
     return NULL;
 }
 
-status_code addToBuffer(pkt_t * pkt) {
-    buffer_t * sent_pkt = malloc(sizeof(buffer_t));
-    if(sent_pkt == NULL) {
+status_code addToBuffer(pkt_t *pkt) {
+    buffer_t *sent_pkt = malloc(sizeof(buffer_t));
+    if (sent_pkt == NULL) {
         return E_GENERIC;
     }
     sent_pkt->timer = time(NULL);
@@ -114,18 +98,19 @@ status_code send_pkt(pkt_t *pkt) {
         printf("Ernno : %d <=> %s \n", errno, strerror(errno));
         return E_SEND_PKT;
     }
-
+    already_sent++;
     free(buf);
     return STATUS_OK;
 }
 
-void removeFromSent(uint8_t seqnum) {
+void removeFromSent() {
     int i;
-    seqnum = seqnum - 1; //removing until seqnum EXCLUDED
+    int seqnum = expected_seqnum - 1; //removing until seqnum EXCLUDED
     uint8_t nbShifted = 0;
-    for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
+    for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         // Sadly, not watching if an ack is relevant meaning between window start and end (cycling included)
-        if((uint8_t)(sent_packets[i]->seqnum - seqnum) > 31u || sent_packets[i]->seqnum == seqnum) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
+        if ((uint8_t) (sent_packets[i]->seqnum - seqnum) > 31u ||
+            sent_packets[i]->seqnum == seqnum) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
             printf("Deleting packet %d ..\n", sent_packets[i]->pkt->Seqnum);
             pkt_del(sent_packets[i]->pkt);
             free(sent_packets[i]);
@@ -147,109 +132,60 @@ void removeFromSent(uint8_t seqnum) {
     } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
 }
 
-void emptySocket() {
+status_code emptySocket() {
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
-    int isAvailable = poll(&read_fd, 1, 500);
+    int isAvailable = poll(&read_fd, 1, 10);
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
-        return;
+        return E_GENERIC;
     }
-    pkt_t * pkt = pkt_new();
-    while (isAvailable > 0 || recWindowFree == 0) {
+    pkt_t *pkt = pkt_new();
+
+    while (isAvailable > 0) {
         recv(socket_fd, buf, 11, 0); // rcv 11 bytes from the socket
         pkt_status_code status = pkt_decode(buf, 11, pkt);
-        if ((uint8_t) (pkt_get_seqnum(pkt) - curr_ack_seqnum) >= 31u) {
-            curr_ack_seqnum = pkt_get_seqnum(pkt);
-            recWindowFree = pkt_get_window(pkt);
-        }
 
         if (status == PKT_OK) {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
-                removeFromSent(pkt->Seqnum); // the pkt has been acked and thus removed from the sent_packet buffer
-                if(isFinished && pkt->Seqnum == 0) {
-                    removeFromSent(1);
-                    return;
+                if ((uint8_t) (pkt_get_seqnum(pkt) - expected_seqnum) >= recWindowFree) {
+                    expected_seqnum = pkt_get_seqnum(pkt);
+                    recWindowFree = pkt_get_window(pkt);
+                    already_sent = 0;
                 }
-                printf("Packets until %d removed from sent_packets !\n", pkt->Seqnum);
             } else if (pkt->Type == 3 && toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
                 send_pkt(toResend); // the packet is not acked, it is re-sent
                 printf("Packet %d resent !\n", pkt->Seqnum);
             }
         }
-        isAvailable = poll(&read_fd, 1, 1000);
+        isAvailable = poll(&read_fd, 1, 10);
     }
+
     pkt_del(pkt);
     free(buf);
+
+    if (recWindowFree == 0) {
+        isAvailable = poll(&read_fd, 1, deadlock_timeout);
+        if (!isAvailable) return E_TIMEOUT;
+        else emptySocket();
+    }
+
+    return STATUS_OK;
 }
 
 void resendExpiredPkt() {
     int i;
-    for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
-        if((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
+    for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
+        if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
             printf("Packet %d has expired !\n", sent_packets[i]->pkt->Seqnum);
             send_pkt(sent_packets[i]->pkt);
         }
     }
 }
 
-
 status_code sender(char *data, uint16_t len) {
-
-    if (!isSocketReady) { // the socket has not been initialized yet
-        socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
-        if (socket_fd == -1) {
-            return E_CONNECT;
-        }
-
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_INET6; // IPv6
-        hints.ai_socktype = SOCK_DGRAM; // diagram connectionless
-        if (getaddrinfo(hostname, port, &hints, &servinfo) != 0) { //hostname : ipV6 address or hostname
-            return E_CONNECT;
-        }
-
-        // retrieving values from struct addrinfo
-        addrlen = servinfo->ai_addrlen;
-        dest_addr = servinfo->ai_addr;
-
-
-        if (connect(socket_fd, dest_addr, addrlen) == -1) {
-            return E_CONNECT;
-        }
-
-
-        int i;
-        for (i = 0; i < 31; i++) {
-            sent_packets[i] = NULL;
-        }
-        curr_seqnum = 0;
-        curr_ack_seqnum = 0;
-        window_end = 30;
-        recWindowFree = 1;
-        retransmission_timer = 4;
-        deadlock_timeout = 120; // 2 min timeout if nothing is received and we can't send anything
-        isSocketReady = true;
-    } // socket ready & global variables initialized
-
-    emptySocket();
-    resendExpiredPkt();
-    time_t start = time(NULL);
-    /* (window_end - curr_seqnum) > 31 : it just means that curr_seqnum > window_end, but handles the case where
-     * curr_seqnum = window_end + 1 -> the difference is 255 (> 31)
-     */
-    while (time(NULL) - start < deadlock_timeout && (uint8_t)(window_end - curr_seqnum) > 31u && recWindowFree==0) {
-        emptySocket();
-        resendExpiredPkt();
-    }
-
-
-    if ((window_end - curr_seqnum) > 31) {
-        return E_TIMEOUT;
-    }
-
     pkt_t *pkt = pkt_new(); // creating a new empty packet
     pkt_set_type(pkt, 1);
     pkt_set_tr(pkt, 0);
@@ -258,10 +194,82 @@ status_code sender(char *data, uint16_t len) {
     pkt_set_timestamp(pkt, time(NULL));
     pkt_set_payload(pkt, data, len);
     status_code status = send_pkt(pkt);
-    if(status == STATUS_OK) {
+    if (status == STATUS_OK) {
         printf("Packet %d sent !\n", pkt->Seqnum);
         addToBuffer(pkt);
         curr_seqnum++;
     }
     return status;
+}
+
+status_code init(char *filename) {
+    file_fd = STDIN_FILENO; // stdin (== 0)
+    if (filename != NULL) { // arg -f not specified
+        file_fd = open(filename, O_RDONLY); // opening the fd in read-only
+        if (file_fd < 0) {
+            return E_FILENAME;
+        }
+    }
+
+    socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (socket_fd == -1) {
+        close(file_fd);
+        return E_CONNECT;
+    }
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET6; // IPv6
+    hints.ai_socktype = SOCK_DGRAM; // diagram connectionless
+    if (getaddrinfo(hostname, port, &hints, &servinfo) != 0) { //hostname : ipV6 address or hostname
+        close(file_fd);
+        return E_CONNECT;
+    }
+
+    // retrieving values from struct addrinfo
+    addrlen = servinfo->ai_addrlen;
+    dest_addr = servinfo->ai_addr;
+
+
+    if (connect(socket_fd, dest_addr, addrlen) == -1) {
+        close(file_fd);
+        return E_CONNECT;
+    }
+
+
+    int i;
+    for (i = 0; i < 31; i++) {
+        sent_packets[i] = NULL;
+    }
+    curr_seqnum = 0;
+    expected_seqnum = 0;
+    //window_end = 30;
+    recWindowFree = 1;
+    retransmission_timer = 4;
+    already_sent = 0;
+    deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
+    isSocketReady = true;
+    isFinished = false;
+    return STATUS_OK;
+}
+
+status_code emptyBuffer() {
+    time_t startEmptying = time(NULL);
+    while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
+        emptySocket();
+        removeFromSent();
+        resendExpiredPkt();
+    }
+    close_fds();
+    if (sent_packets[0] != NULL) return E_TIMEOUT;
+    else return STATUS_OK;
+}
+
+status_code sendLastPacket() {
+    printf("Sending EOF packet \n");
+    return sender(NULL, 0);
+}
+
+void close_fds() {
+    close(file_fd);
+    close(socket_fd);
 }

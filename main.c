@@ -30,7 +30,7 @@ int main(const int argc, char *argv[]) {
 
     isSocketReady = false;
 
-    status_code ret = reader(filename);
+    status_code ret = scheduler(filename);
     if (ret != STATUS_OK) {
         printf("Error code : %d \n", ret);
         return EXIT_FAILURE;
