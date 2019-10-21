@@ -122,6 +122,6 @@ void removeFromSent(uint8_t seqnum);
  */
 void resendExpiredPkt();
 
-void printAsBinary(const char *buf, size_t len);
+//void printAsBinary(const char *buf, size_t len);
 
 #endif //FORMAT_SEGMENTS_SENDER_H

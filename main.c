@@ -35,5 +35,6 @@ int main(const int argc, char *argv[]) {
         printf("Error code : %d \n", ret);
         return EXIT_FAILURE;
     }
+    free(filename);
     return EXIT_SUCCESS;
 }

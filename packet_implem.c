@@ -7,6 +7,7 @@ pkt_t *pkt_new() {
     pkt_t *pkt = (pkt_t *) malloc(sizeof(pkt_t));
     if (pkt == NULL)
         return NULL;
+    pkt->payload=NULL;
     return pkt;
 }
 
@@ -78,6 +79,8 @@ pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt) {
 
     uint32_t computedCRC1 = crc32(0, Z_NULL, 0);
     computedCRC1 = crc32(computedCRC1, (uint8_t *) header, 6 + nBytes);
+
+    free(header);
 
     if (computedCRC1 != pkt_get_crc1(pkt)) {
         return E_CRC;

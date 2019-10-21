@@ -27,11 +27,15 @@ status_code reader(char *filename) {
         nBytes = read(fd, &buf, 512); // reads again an a new value of nBytes is set
     } // all the packets have been sent, but maybe not received correctly
 
+    sender(NULL, 0);
+
     time_t startEmptying = time(NULL);
     while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
         emptySocket();
         resendExpiredPkt();
     }
+
+
 
     close(fd);
     close(socket_fd);
@@ -104,6 +108,8 @@ status_code send_pkt(pkt_t *pkt) {
         printf("Ernno : %d <=> %s \n", errno, strerror(errno));
         return E_SEND_PKT;
     }
+
+    free(buf);
     return STATUS_OK;
 }
 
@@ -112,7 +118,7 @@ void removeFromSent(uint8_t seqnum) {
     seqnum = seqnum - 1; //removing until seqnum EXCLUDED
     uint8_t nbShifted = 0;
     for(i=0; i < 31 && sent_packets[i] != NULL; i++) {
-
+        // Sadly, not watching if an ack is relevant meaning between window start and end (cycling included)
         if((uint8_t)(sent_packets[i]->seqnum - seqnum) > 31u || sent_packets[i]->seqnum == seqnum) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
             printf("Deleting packet %d ..\n", sent_packets[i]->pkt->Seqnum);
             pkt_del(sent_packets[i]->pkt);
@@ -149,16 +155,19 @@ void emptySocket() {
     if (buf == NULL) {
         return;
     }
-
-    while (isAvailable > 0) {
+    pkt_t * pkt = pkt_new();
+    while (isAvailable > 0 || recWindowFree == 0) {
         recv(socket_fd, buf, 11, 0); // rcv 11 bytes from the socket
         //printAsBinary(buf, 11);
-        pkt_t * pkt = pkt_new();
         pkt_status_code status = pkt_decode(buf, 11, pkt);
         //pkt_set_seqnum(pkt, pkt_get_seqnum(pkt)-1); // Supra-mystic line from nowhere => it works !!!!
+        if ((uint8_t) (pkt_get_seqnum(pkt) - curr_ack_seqnum) >= 31u) {
+            curr_ack_seqnum = pkt_get_seqnum(pkt);
+            recWindowFree = pkt_get_window(pkt);
+        }
 
         if (status == PKT_OK) {
-            pkt_t * toResend = getFromBuffer(pkt->Seqnum);
+            pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
                 //printf("Removing packet %d from sent_packets...\n", pkt->Seqnum);
@@ -172,8 +181,7 @@ void emptySocket() {
                 }
                  */
                 printf("Packets until %d removed from sent_packets !\n", pkt->Seqnum);
-            }
-            else if (pkt->Type == 3 && toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
+            } else if (pkt->Type == 3 && toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
                 //printf("Resending packet %d ...\n", pkt->Seqnum);
                 send_pkt(toResend); // the packet is not acked, it is re-sent
                 printf("Packet %d resent !\n", pkt->Seqnum);
@@ -181,7 +189,7 @@ void emptySocket() {
         }
         isAvailable = poll(&read_fd, 1, 1000);
     }
-
+    pkt_del(pkt);
     free(buf);
 }
 
@@ -227,6 +235,7 @@ status_code sender(char *data, uint16_t len) {
             sent_packets[i] = NULL;
         }
         curr_seqnum = 0;
+        curr_ack_seqnum = 0;
         window_end = 30;
         recWindowFree = 1;
         retransmission_timer = 10;
@@ -240,7 +249,7 @@ status_code sender(char *data, uint16_t len) {
     /* (window_end - curr_seqnum) > 31 : it just means that curr_seqnum > window_end, but handles the case where
      * curr_seqnum = window_end + 1 -> the difference is 255 (> 31)
      */
-    while (time(NULL) - start < deadlock_timeout && (window_end - curr_seqnum) > 31) {
+    while (time(NULL) - start < deadlock_timeout && (uint8_t)(window_end - curr_seqnum) > 31u && recWindowFree==0) {
         emptySocket();
         resendExpiredPkt();
     }
@@ -265,7 +274,7 @@ status_code sender(char *data, uint16_t len) {
     }
     return status;
 }
-
+/*
 void printAsBinary(const char *buf, size_t len) {
     printf("Buf as binary : ");
     int i;
@@ -282,7 +291,7 @@ void printAsBinary(const char *buf, size_t len) {
     }
     printf("\n");
 }
-
+*/
 /*
  * implementer la window dynamique -> attention que quand on fait le tour/cycle, curr_seqnum > window_end peut être un pb
  *
