@@ -18,7 +18,7 @@ status_code scheduler(char *filename) {
         }
         resendExpiredPkt();
 
-        while ((recWindowFree - already_sent) > 0 && nbElemBuf < 31) {
+        while ((recWindowFree - already_sent) != 0 && nbElemBuf < 31) {
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
             if (nBytes > 0) {
@@ -31,8 +31,12 @@ status_code scheduler(char *filename) {
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
-                emptyBuffer();
-                if (sendLastPacket() != STATUS_OK) return E_LAST_PKT;
+                status = emptyBuffer();
+                if(status != STATUS_OK) {
+                    return status;
+                }
+                status = sendLastPacket();
+                if (status != STATUS_OK) return status;
                 break;
             }
             start = time(NULL);
@@ -41,7 +45,7 @@ status_code scheduler(char *filename) {
     if (!isFinished) {
         return E_TIMEOUT;
     }
-
+    retransmission_timer = 15;
     return emptyBuffer();
 }
 
@@ -166,7 +170,8 @@ status_code emptySocket() {
                         printf("New ACK for PKT_SEQ %d\n", pkt->Seqnum);
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
-                    if(toResend != NULL && fastRetrans.occ >= 3) {
+                    if(toResend != NULL && fastRetrans.occ >= 3 && !isFinished) {
+                        fastRetrans.occ=0;
                         send_pkt(toResend);
                     }
                 }
@@ -205,6 +210,7 @@ void resendExpiredPkt() {
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
             printf("Packet %d has expired !\n", sent_packets[i]->pkt->Seqnum);
+            sent_packets[i]->timer = time(NULL);
             send_pkt(sent_packets[i]->pkt);
         }
     }
