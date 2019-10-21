@@ -34,8 +34,13 @@ typedef enum { // possible errors encountered in sender.c
 typedef struct buffer {
     time_t timer;
     pkt_t *pkt;
-    uint8_t seqnum;
 } buffer_t;
+
+typedef struct counter {
+    uint8_t ack_seq;
+    uint8_t occ;
+
+} counter_t;
 
 char *hostname;
 char *port;
@@ -50,11 +55,15 @@ uint8_t curr_seqnum;
 time_t retransmission_timer;
 time_t deadlock_timeout; // 2min timeout if nothing is received and we can't send anything
 struct timeval select_timeout;
-buffer_t *sent_packets[31];
+buffer_t * sent_packets[31];
+int nbElemBuf;
 uint8_t recWindowFree;
 uint8_t expected_seqnum;
 uint8_t already_sent;
 bool isFinished;
+counter_t fastRetrans;
+
+
 
 int socket_fd;
 int file_fd;
@@ -110,7 +119,7 @@ status_code addToBuffer(pkt_t *pkt);
  *
  * @return: true if suck a packet is found, false otherwise.
  */
-bool isToResend(uint8_t seqnum);
+bool isUsefulAck(uint8_t seqnum);
 
 pkt_t * getFromBuffer(uint8_t seqnum);
 
@@ -118,7 +127,7 @@ pkt_t * getFromBuffer(uint8_t seqnum);
  * Checks the buffer for sent_pkt with the sequence number equal to seqnum, and if it is found, the pkt is
  * removed (freed).
  */
-void removeFromSent();
+void removeFromSent(uint8_t expected_seq);
 
 /*
  * Checks for each element in the buffer packet_send if the retransmission is expired, if it is, the pkt is resent.
