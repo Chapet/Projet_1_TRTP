@@ -10,7 +10,7 @@ int acks;
 
 int sender_setup(void) {
     int i;
-    acks = rand() % BUFFER_SIZE;
+    acks = rand() % BUFFER_SIZE-1;
     if(acks==0) acks++;
     for(i=0; i <= acks; i++) {
         pkt_t * pkt = pkt_new();
