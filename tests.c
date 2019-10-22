@@ -7,21 +7,36 @@
 
 #include "sender.h"
 
-int sender_setup(void) {
+int isUsefulAck_setup(void) {
+    int i;
+    int r = rand();
+    for(i=0; i < r % BUFFER_SIZE; i++) {
+        pkt_t * pkt = pkt_new();
+        pkt_set_type(pkt, 1);
+        pkt_set_tr(pkt, 0);
+        pkt_set_window(pkt, 0);
+        pkt_set_seqnum(pkt, i);
+        char str[7];
+        sprintf(str,"Payload no. %d", i);
+        pkt_set_payload(pkt, str, 7);
+        addToBuffer(pkt);
+    }
     return 0;
 }
 
-int sender_teardown(void) {
+int isUseful_teardown(void) {
     return 0;
 }
 
-void sender_test(void) {
+void isUsefulAck_test(void) {
+    CU_ASSERT
     return;
 }
 
 
 int main(int argc, char *argv[]) {
     printf("Tests are running ... \n");
+    srand(time(NULL));
 
     if (CUE_SUCCESS != CU_initialize_registry())
         return CU_get_error();
