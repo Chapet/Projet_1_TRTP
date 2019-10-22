@@ -11,6 +11,7 @@ int acks;
 int sender_setup(void) {
     int i;
     acks = rand() % BUFFER_SIZE;
+    if(acks==0) acks++;
     for(i=0; i <= acks; i++) {
         pkt_t * pkt = pkt_new();
         pkt_set_type(pkt, 1);

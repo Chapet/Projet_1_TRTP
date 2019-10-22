@@ -106,7 +106,7 @@ status_code send_pkt(pkt_t *pkt) {
     }
     ssize_t sent = send(socket_fd, buf, size, 0);
     if (sent == -1) {
-        printf("Ernno : %d (%s) \n", errno, strerror(errno));
+        printf("Ernno : %d (%s) -> You should ignore this if you have launched the tests\n", errno, strerror(errno));
         return E_SEND_PKT;
     }
     already_sent++;
