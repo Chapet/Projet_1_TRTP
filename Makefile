@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS =-Wall -Werror -std=c99 -g
 
 sender: main.o sender.o packet_implem.o
-	$(CC) -o main.out main.o sender.o packet_implem.o -lz
+	$(CC) -o sender main.o sender.o packet_implem.o -lz
 
 main.o: main.c sender.h
 	$(CC) $(CFLAGS) -o main.o -c main.c
