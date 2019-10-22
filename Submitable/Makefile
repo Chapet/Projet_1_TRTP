@@ -13,8 +13,8 @@ sender.o: src/sender.c src/sender.h src/packet_interface.h
 packet_implem.o: src/packet_implem.c src/packet_interface.h
 	$(CC) $(CFLAGS) -o src/packet_implem.o -c src/packet_implem.c
 
-tests: tests/tests.o src/sender.o src/packet_implem.o
-	$(CC) -o tests tests/tests.o src/sender.o src/packet_implem.o -lz -lcunit
+tests: tests/tests.o ../src/sender.o ../src/packet_implem.o
+	$(CC) -o tests tests/tests.o ../src/sender.o ../src/packet_implem.o -lz -lcunit
 	make clean
 	./tests
 	rm tests
