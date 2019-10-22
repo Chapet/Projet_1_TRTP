@@ -58,24 +58,21 @@ void addToBuffer_test(void) {
 
 void isUsefulAck_test(void) {
     int i;
-    for(i=0; i <= acks+1; i++) {
+    for(i=0; i <= nbElemBuf; i++) {
         CU_ASSERT_EQUAL(isUsefulAck(i), true);
     }
-    int j = acks+2;
-    if (j < 2*BUFFER_SIZE) {
-        for(i=j; i < BUFFER_SIZE; i++) {
-            CU_ASSERT_EQUAL(isUsefulAck(i), false);
-        }
+    for(i=nbElemBuf+1; i < BUFFER_SIZE; i++) {
+        CU_ASSERT_EQUAL(isUsefulAck(i), false);
     }
     return;
 }
 
 void getFromBuffer_test(void) {
     int i;
-    for(i=0; i <= acks; i++) {
+    for(i=0; i < nbElemBuf; i++) {
         CU_ASSERT_EQUAL(getFromBuffer(i), sent_packets[i]->pkt);
     }
-    int j = acks+1;
+    int j = nbElemBuf;
     if (j < 2*BUFFER_SIZE) {
         for(i=j; i < BUFFER_SIZE; i++) {
             CU_ASSERT_EQUAL(getFromBuffer(i), NULL);
