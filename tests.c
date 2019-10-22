@@ -27,12 +27,14 @@ int sender_setup(void) {
 }
 
 int sender_teardown(void) {
+    /*
     int i;
     for(i=0; i<nbElemBuf && sent_packets[i] != NULL; i++) {
         pkt_del(sent_packets[i]->pkt);
         free(sent_packets[i]);
         sent_packets[i] = NULL;
     }
+     */
     return 0;
 }
 
