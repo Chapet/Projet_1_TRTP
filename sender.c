@@ -126,7 +126,7 @@ void removeFromSent() {
             sent_packets[i-toRemove] = sent_packets[i];
             sent_packets[i] = NULL;
         }
-        printf("PKTs removed until PKT_SEQ %d excluded\n", best_expected);
+        //printf("PKTs removed until PKT_SEQ %d excluded\n", best_expected);
         nbElemBuf-=toRemove;
         toRemove=0;
     }
@@ -166,7 +166,7 @@ status_code emptySocket() {
                 }
             } else if (pkt->Type == 3 && toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
                 send_pkt(toResend); // the packet is not acked, it is re-sent
-                printf("Packet %d resent !\n", pkt->Seqnum);
+                //printf("Packet %d resent !\n", pkt->Seqnum);
             }
         }
         isAvailable = poll(&read_fd, 1, 10);
@@ -199,7 +199,7 @@ status_code sender(char *data, uint16_t len) {
     pkt_set_payload(pkt, data, len);
     status_code status = send_pkt(pkt);
     if (status == STATUS_OK) {
-        printf("Packet %d sent !\n", pkt->Seqnum);
+        //printf("Packet %d sent !\n", pkt->Seqnum);
         addToBuffer(pkt);
         nbElemBuf++;
         curr_seqnum++;
@@ -250,7 +250,7 @@ status_code init(char *filename) {
     toRemove=0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 4;
+    retransmission_timer = 3;
     already_sent = 0;
     deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
     isSocketReady = true;
@@ -271,7 +271,7 @@ status_code emptyBuffer() {
 }
 
 status_code sendLastPacket() {
-    printf("Sending EOF packet \n");
+    //printf("Sending EOF packet \n");
     return sender(NULL, 0);
 }
 
