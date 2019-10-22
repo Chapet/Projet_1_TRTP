@@ -89,6 +89,7 @@ status_code addToBuffer(pkt_t *pkt) {
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
     sent_packets[i] = sent_pkt;
 
+    nbElemBuf++;
     return STATUS_OK;
 }
 
@@ -199,7 +200,6 @@ status_code sender(char *data, uint16_t len) {
     if (status == STATUS_OK) {
         //printf("Packet %d sent !\n", pkt->Seqnum);
         addToBuffer(pkt);
-        nbElemBuf++;
         curr_seqnum++;
     }
     return status;

@@ -19,7 +19,7 @@ int isUsefulAck_setup(void) {
         pkt_set_seqnum(pkt, i);
         char str[14];
         sprintf(str,"Payload no. %d", i);
-        pkt_set_payload(pkt, str, 7);
+        pkt_set_payload(pkt, str, 14);
         addToBuffer(pkt);
     }
     return 0;
@@ -37,11 +37,11 @@ int isUsefulAck_teardown(void) {
 
 void isUsefulAck_test(void) {
     int i;
-    for(i=0; i <= acks; i++) {
+    for(i=0; i <= acks+1; i++) {
         CU_ASSERT_EQUAL(isUsefulAck(i), true);
     }
-    if (acks+1 < 2*BUFFER_SIZE) {
-        for(i=acks+1; i < BUFFER_SIZE; i++) {
+    if (acks+2 < 2*BUFFER_SIZE) {
+        for(i=acks+2; i < BUFFER_SIZE; i++) {
             CU_ASSERT_EQUAL(isUsefulAck(i), false);
         }
     }
