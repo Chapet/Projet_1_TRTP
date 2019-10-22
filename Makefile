@@ -13,12 +13,17 @@ sender.o: sender.c sender.h packet_interface.h
 packet_implem.o: packet_implem.c packet_interface.h
 	$(CC) $(CFLAGS) -o packet_implem.o -c packet_implem.c
 
+tests: tests.o sender.o packet_implem.o
+	$(CC) -o tests tests.o sender.o packet_implem.o -lz
+	make clean
+	./tests
+
+tests.o: tests.c sender.h
+	$(CC) $(CFLAGS) -o tests.o -c tests.c
+
 all:
 	make
-	#make tests
+	make clean
 
-    # insert tests here
-
-#.PHONY : clean tests
 clean:
 	rm -rf *.o
