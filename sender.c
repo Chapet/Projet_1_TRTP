@@ -16,9 +16,10 @@ status_code scheduler(char *filename) {
             close_fds();
             return status;
         }
+        removeFromSent();
         resendExpiredPkt();
 
-        while ((recWindowFree - already_sent) != 0 && nbElemBuf < 31) {
+        while ((recWindowFree - already_sent) != 0 && nbElemBuf < BUFFER_SIZE) {
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
             if (nBytes > 0) {
@@ -50,9 +51,14 @@ status_code scheduler(char *filename) {
 }
 
 bool isUsefulAck(uint8_t seqnum) {
-    int i;
-    for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
-        if (pkt_get_seqnum(sent_packets[i]->pkt) < seqnum) {
+    if(nbElemBuf == 0) {
+        return false;
+    }
+    uint8_t tmp = (uint8_t)(seqnum - sent_packets[0]->pkt->Seqnum);
+    if(tmp <= nbElemBuf) {
+        if(tmp >= toRemove) {
+            best_expected = seqnum;
+            toRemove = tmp;
             return true;
         }
     }
@@ -106,34 +112,22 @@ status_code send_pkt(pkt_t *pkt) {
     return STATUS_OK;
 }
 
-void removeFromSent(uint8_t expected_seq) {
-    int i;
-    int seqnum = expected_seq - 1; //removing until seqnum EXCLUDED
-    uint8_t nbShifted = 0;
-    for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
-        // Sadly, not watching if an ack is relevant meaning between window start and end (cycling included)
-        if ((uint8_t) (sent_packets[i]->pkt->Seqnum - seqnum) > 31u ||
-            sent_packets[i]->pkt->Seqnum == seqnum) { // sent_packets[i]->seqnum < seqnum but handles uint8_t cycling
+void removeFromSent() {
+    if (toRemove>0) {
+        int i;
+        for (i = 0; i < toRemove && sent_packets[i] != NULL; i++) {
             pkt_del(sent_packets[i]->pkt);
             free(sent_packets[i]);
             sent_packets[i] = NULL;
-            nbElemBuf--;
-            nbShifted++;
         }
-        if (nbShifted > 0) {
-            if (sent_packets[i] == NULL) { // the element was deleted
-                int j;
-                for (j = 0; j < nbShifted - 1; j++) {
-                    if (i + 1 + j >= 31) sent_packets[i - (nbShifted - 1) + j] = NULL;
-                    else sent_packets[i - (nbShifted - 1) + j] = sent_packets[i + 1 + j];
-                } // so we shift accordingly the preceding packets
-            }
-            // and in any case (element deleted or not) we replace the packet by the shifted value
-            if (i + nbShifted >= 31) sent_packets[i] = NULL;
-            else sent_packets[i] = sent_packets[i + nbShifted];
+        for (i=toRemove; i<nbElemBuf && sent_packets[i] != NULL; i++) {
+            sent_packets[i-toRemove] = sent_packets[i];
+            sent_packets[i] = NULL;
         }
-    } // we found the element(s), deleted it(them) and shifted all the element after it to the left accordingly
-    if (seqnum>0) printf("PKTs removed until PKT_SEQ %d \n", seqnum);
+        printf("PKTs removed until PKT_SEQ %d excluded\n", best_expected);
+        nbElemBuf-=toRemove;
+        toRemove=0;
+    }
 }
 
 status_code emptySocket() {
@@ -151,38 +145,23 @@ status_code emptySocket() {
         pkt_status_code status = pkt_decode(buf, 11, pkt);
 
         if (status == PKT_OK) {
-            //printf("PKT_TYPE %d for PKT_SEQ %d\n", pkt->Type, pkt->Seqnum);
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
-            //printf("Found in socket : PKT_TYPE %d for PKT %d\n", pkt->Type, pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
                 if(isUsefulAck(pkt->Seqnum)) {
-
-                    //printf("Removing until PKT_SEQ %d\n", pkt->Seqnum);
-                    removeFromSent(pkt->Seqnum);
+                    printf("New ACK for PKT_SEQ %d\n", pkt->Seqnum);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
-                }
-                else {
                     if(fastRetrans.ack_seq == pkt->Seqnum) {
                         fastRetrans.occ++;
                     }
                     else {
-                        printf("New ACK for PKT_SEQ %d\n", pkt->Seqnum);
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
                     if(toResend != NULL && fastRetrans.occ >= 3 && !isFinished) {
-                        fastRetrans.occ=0;
+                        fastRetrans.occ = 0;
                         send_pkt(toResend);
                     }
                 }
-                /*
-                if ((uint8_t)(expected_seqnum - pkt_get_seqnum(pkt)) >= 31u && ()) {
-                    expected_seqnum = pkt_get_seqnum(pkt);
-                    recWindowFree = pkt_get_window(pkt);
-                    window_end = curr_seqnum + recWindowFree;
-                    already_sent = 0;
-                }
-                 */
             } else if (pkt->Type == 3 && toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packet buffer
                 send_pkt(toResend); // the packet is not acked, it is re-sent
                 printf("Packet %d resent !\n", pkt->Seqnum);
@@ -190,18 +169,8 @@ status_code emptySocket() {
         }
         isAvailable = poll(&read_fd, 1, 10);
     }
-
     pkt_del(pkt);
     free(buf);
-
-    /*
-    if (recWindowFree == 0) {
-        isAvailable = poll(&read_fd, 1, deadlock_timeout);
-        if (isAvailable <= 0) return E_TIMEOUT;
-        else emptySocket();
-    }
-     */
-
     return STATUS_OK;
 }
 
@@ -273,7 +242,8 @@ status_code init(char *filename) {
         sent_packets[i] = NULL;
     }
     curr_seqnum = 0;
-    expected_seqnum = 0;
+    best_expected = 0;
+    toRemove=0;
     recWindowFree = 1;
     nbElemBuf = 0;
     retransmission_timer = 2;
@@ -297,6 +267,7 @@ status_code emptyBuffer() {
 
 status_code sendLastPacket() {
     printf("Sending EOF packet \n");
+    curr_seqnum--;
     return sender(NULL, 0);
 }
 

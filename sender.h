@@ -21,6 +21,8 @@
 #include <errno.h>
 #include <poll.h>
 
+#define BUFFER_SIZE 31
+
 typedef enum { // possible errors encountered in sender.c
     STATUS_OK = 0,
     E_GENERIC = 1,
@@ -55,10 +57,11 @@ uint8_t curr_seqnum;
 time_t retransmission_timer;
 time_t deadlock_timeout; // 2min timeout if nothing is received and we can't send anything
 struct timeval select_timeout;
-buffer_t * sent_packets[31];
-int nbElemBuf;
+buffer_t * sent_packets[BUFFER_SIZE];
+uint8_t nbElemBuf;
 uint8_t recWindowFree;
-uint8_t expected_seqnum;
+uint8_t best_expected;
+uint8_t toRemove;
 uint8_t already_sent;
 bool isFinished;
 counter_t fastRetrans;
@@ -127,7 +130,7 @@ pkt_t * getFromBuffer(uint8_t seqnum);
  * Checks the buffer for sent_pkt with the sequence number equal to seqnum, and if it is found, the pkt is
  * removed (freed).
  */
-void removeFromSent(uint8_t expected_seq);
+void removeFromSent();
 
 /*
  * Checks for each element in the buffer packet_send if the retransmission is expired, if it is, the pkt is resent.
