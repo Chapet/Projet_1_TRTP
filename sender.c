@@ -36,6 +36,7 @@ status_code scheduler(char *filename) {
                 if(status != STATUS_OK) {
                     return status;
                 }
+                sleep(2);
                 status = sendLastPacket();
                 if (status != STATUS_OK) return status;
                 break;
@@ -46,7 +47,7 @@ status_code scheduler(char *filename) {
     if (!isFinished) {
         return E_TIMEOUT;
     }
-    retransmission_timer = 15;
+    sleep(2);
     return emptyBuffer();
 }
 
@@ -113,6 +114,7 @@ status_code send_pkt(pkt_t *pkt) {
 }
 
 void removeFromSent() {
+    //if (nbElemBuf>0) printf("removeFromSent() with toRemove = %d and last element in buffer = %d \n", toRemove, sent_packets[nbElemBuf-1]->pkt->Seqnum);
     if (toRemove>0) {
         int i;
         for (i = 0; i < toRemove && sent_packets[i] != NULL; i++) {
@@ -148,7 +150,7 @@ status_code emptySocket() {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             if (pkt->Type == 2) { // pkt is PTYPE_ACK & is present in the sent_packet buffer
                 if(isUsefulAck(pkt->Seqnum)) {
-                    printf("New ACK for PKT_SEQ %d\n", pkt->Seqnum);
+                    //printf("New ACK for PKT_SEQ %d\n", pkt->Seqnum);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
                     if(fastRetrans.ack_seq == pkt->Seqnum) {
@@ -176,13 +178,15 @@ status_code emptySocket() {
 
 void resendExpiredPkt() {
     int i;
+    int last=0;
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
-            printf("Packet %d has expired !\n", sent_packets[i]->pkt->Seqnum);
             sent_packets[i]->timer = time(NULL);
             send_pkt(sent_packets[i]->pkt);
+            last=i;
         }
     }
+    //if (sent_packets[last] != NULL) printf("Packets until %d have expired !\n", sent_packets[last]->pkt->Seqnum);
 }
 
 status_code sender(char *data, uint16_t len) {
@@ -246,7 +250,7 @@ status_code init(char *filename) {
     toRemove=0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 2;
+    retransmission_timer = 4;
     already_sent = 0;
     deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
     isSocketReady = true;
@@ -259,6 +263,7 @@ status_code emptyBuffer() {
     time_t startEmptying = time(NULL);
     while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
         emptySocket();
+        removeFromSent();
         resendExpiredPkt();
     }
     if (sent_packets[0] != NULL) return E_TIMEOUT;
@@ -267,7 +272,6 @@ status_code emptyBuffer() {
 
 status_code sendLastPacket() {
     printf("Sending EOF packet \n");
-    curr_seqnum--;
     return sender(NULL, 0);
 }
 
