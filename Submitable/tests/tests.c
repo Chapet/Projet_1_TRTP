@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include "sender.h"
+#include "../src/sender.h"
 int acks;
 
 int sender_setup(void) {
