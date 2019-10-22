@@ -6,11 +6,12 @@
 #include <unistd.h>
 
 #include "sender.h"
+int acks;
 
 int isUsefulAck_setup(void) {
     int i;
-    int r = rand();
-    for(i=0; i < r % BUFFER_SIZE; i++) {
+    acks = rand() % BUFFER_SIZE+1;
+    for(i=0; i <= acks; i++) {
         pkt_t * pkt = pkt_new();
         pkt_set_type(pkt, 1);
         pkt_set_tr(pkt, 0);
@@ -24,12 +25,26 @@ int isUsefulAck_setup(void) {
     return 0;
 }
 
-int isUseful_teardown(void) {
+int isUsefulAck_teardown(void) {
+    int i;
+    for(i=0; i<BUFFER_SIZE && sent_packets[i] != NULL; i++) {
+        pkt_del(sent_packets[i]->pkt);
+        free(sent_packets[i]);
+        sent_packets[i] = NULL;
+    }
     return 0;
 }
 
 void isUsefulAck_test(void) {
-    CU_ASSERT
+    int i;
+    for(i=0; i <= acks; i++) {
+        CU_ASSERT_EQUALS(isUsefulAck(i), true);
+    }
+    if (acks+1 < 2*BUFFER_SIZE) {
+        for(i=acks+1; i < BUFFER_SIZE; i++) {
+            CU_ASSERT_EQUALS(isUsefulAck(i), false);
+        }
+    }
     return;
 }
 
@@ -43,14 +58,14 @@ int main(int argc, char *argv[]) {
 
     // Sender
 
-    CU_pSuite pSenderSuite = NULL;
-    pSenderSuite = CU_add_suite("ma_suite", sender_setup, sender_teardown);
-    if (NULL == pSenderSuite) {
+    CU_pSuite pIsUsefulAckSuite = NULL;
+    pIsUsefulAckSuite = CU_add_suite("isUsefulAck_suite", isUsefulAck_setup, isUsefulAck_teardown);
+    if (NULL == pIsUsefulAckSuite) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
-    if (NULL == CU_add_test(pSenderSuite, "Test sender", sender_test)) {
+    if (NULL == CU_add_test(pIsUsefulAckSuite, "isUsefulAck()'s Test", isUsefulAck_test) {
         CU_cleanup_registry();
         return CU_get_error();
     }
