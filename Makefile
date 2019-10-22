@@ -22,4 +22,4 @@ all:
 #.PHONY : clean tests
 
 clean:
-    rm -rf sender *.o
+    rm -rf *.o
