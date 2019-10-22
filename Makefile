@@ -21,5 +21,5 @@ all:
 
 #.PHONY : clean tests
 
-clean:
-    rm -rf *.o
+#clean:
+    #rm -rf *.o
