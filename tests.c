@@ -10,9 +10,11 @@ int acks;
 
 int sender_setup(void) {
     int i;
-    acks = rand() % BUFFER_SIZE-1;
+    acks = rand() % BUFFER_SIZE;
+    nbElemBuf = 0;
+    //acks=10;
     if(acks==0) acks++;
-    for(i=0; i <= acks; i++) {
+    for(i=0; i < acks; i++) {
         pkt_t * pkt = pkt_new();
         pkt_set_type(pkt, 1);
         pkt_set_tr(pkt, 0);
@@ -23,6 +25,16 @@ int sender_setup(void) {
         pkt_set_payload(pkt, str, 14);
         addToBuffer(pkt);
     }
+    curr_seqnum = 0;
+    best_expected = 0;
+    toRemove=0;
+    recWindowFree = 31;
+    retransmission_timer = 2;
+    already_sent = 0;
+    deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
+    isSocketReady = true;
+    isFinished = false;
+    fastRetrans = (counter_t){0,0};
     return 0;
 }
 
@@ -46,11 +58,12 @@ void addToBuffer_test(void) {
     sprintf(str,"Payload no. %d", acks+1);
     pkt_set_payload(pkt, str, 14);
     addToBuffer(pkt);
-    CU_ASSERT_EQUAL(sent_packets[acks+1]->pkt, pkt);
-    CU_ASSERT_EQUAL(sent_packets[acks+1]->pkt->Seqnum, 42);
-    pkt_del(sent_packets[acks+1]->pkt);
-    free(sent_packets[acks+1]);
-    sent_packets[acks+1] = NULL;
+    CU_ASSERT_EQUAL(sent_packets[nbElemBuf-1]->pkt, pkt);
+    //printf("%p == %p ?\n", sent_packets[nbElemBuf-1]->pkt,pkt);
+    CU_ASSERT_EQUAL(sent_packets[nbElemBuf-1]->pkt->Seqnum, 42);
+    pkt_del(sent_packets[nbElemBuf-1]->pkt);
+    free(sent_packets[nbElemBuf-1]);
+    sent_packets[nbElemBuf-1] = NULL;
     nbElemBuf--;
     return;
 }
