@@ -10,16 +10,17 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 #include <sys/time.h>
 #include <time.h>
 #include "packet_interface.h"
 #include <errno.h>
 #include <poll.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #define BUFFER_SIZE 31
 

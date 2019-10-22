@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS =-Wall -Werror -std=gnu99
+CFLAGS =-Wall -Werror -std=c99
 
 src/sender: src/main.o src/sender.o src/packet_implem.o
 	$(CC) -o src/sender src/main.o src/sender.o src/packet_implem.o -lz
