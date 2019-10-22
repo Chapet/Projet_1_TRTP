@@ -11,7 +11,7 @@ sender.o: sender.c sender.h packet_interface.h
 	$(CC) $(CFLAGS) -o sender.o -c sender.c
 
 packet_implem.o: packet_implem.c packet_interface.h
-    $(CC) $(CFLAGS) -o packet_implem.o -c packet_implem.c
+	$(CC) $(CFLAGS) -o packet_implem.o -c packet_implem.c
 
 all:
 	make
@@ -22,4 +22,4 @@ all:
 #.PHONY : clean tests
 
 clean:
-    rm -rf *.o
+	rm -rf *.o
