@@ -24,6 +24,7 @@ tests/tests.o: tests/tests.c tests/sender.h
 all:
 	make
 	make tests
+	make clean
 
 clean:
-	rm -rf *.o
+	rm -rf *.o tests/tests
