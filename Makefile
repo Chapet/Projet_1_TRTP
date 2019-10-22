@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS =-Wall -Werror -std=gnu99
+CFLAGS =-Wall -Werror -std=c99
 
 sender: main.o sender.o packet_implem.o
 	$(CC) -o sender main.o sender.o packet_implem.o -lz
@@ -20,6 +20,5 @@ all:
     # insert tests here
 
 #.PHONY : clean tests
-
 clean:
 	rm -rf *.o
