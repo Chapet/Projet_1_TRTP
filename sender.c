@@ -178,12 +178,10 @@ status_code emptySocket() {
 
 void resendExpiredPkt() {
     int i;
-    int last=0;
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
             sent_packets[i]->timer = time(NULL);
             send_pkt(sent_packets[i]->pkt);
-            last=i;
         }
     }
     //if (sent_packets[last] != NULL) printf("Packets until %d have expired !\n", sent_packets[last]->pkt->Seqnum);
