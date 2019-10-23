@@ -89,6 +89,7 @@ status_code addToBuffer(pkt_t *pkt) {
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
     sent_packets[i] = sent_pkt;
 
+    nbElemBuf++;
     return STATUS_OK;
 }
 
@@ -105,7 +106,7 @@ status_code send_pkt(pkt_t *pkt) {
     }
     ssize_t sent = send(socket_fd, buf, size, 0);
     if (sent == -1) {
-        printf("Ernno : %d <=> %s \n", errno, strerror(errno));
+        printf("Ernno : %d (%s) -> You should ignore this if you have launched the tests\n", errno, strerror(errno));
         return E_SEND_PKT;
     }
     already_sent++;
@@ -159,7 +160,7 @@ status_code emptySocket() {
                     else {
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
-                    if(toResend != NULL && fastRetrans.occ >= 3 && !isFinished) {
+                    if(toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
                         fastRetrans.occ = 0;
                         send_pkt(toResend);
                     }
@@ -182,6 +183,7 @@ void resendExpiredPkt() {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
             sent_packets[i]->timer = time(NULL);
             send_pkt(sent_packets[i]->pkt);
+            // TODO : We DO NOT check the return of send_pkt
         }
     }
     //if (sent_packets[last] != NULL) printf("Packets until %d have expired !\n", sent_packets[last]->pkt->Seqnum);
@@ -199,7 +201,6 @@ status_code sender(char *data, uint16_t len) {
     if (status == STATUS_OK) {
         //printf("Packet %d sent !\n", pkt->Seqnum);
         addToBuffer(pkt);
-        nbElemBuf++;
         curr_seqnum++;
     }
     return status;
@@ -248,7 +249,7 @@ status_code init(char *filename) {
     toRemove=0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 3;
+    retransmission_timer = 2;
     already_sent = 0;
     deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
     isSocketReady = true;
