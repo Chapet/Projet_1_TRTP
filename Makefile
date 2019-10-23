@@ -14,12 +14,12 @@ src/packet_implem.o: src/packet_implem.c src/packet_interface.h
 	$(CC) $(CFLAGS) -o src/packet_implem.o -c src/packet_implem.c
 
 tests/tests: tests/tests.o tests/sender.o tests/packet_implem.o
-	$(CC) -o tests/tests tests/tests.o tests/sender.o tests/packet_implem.o -lz
+	$(CC) -o tests/tests tests/tests.o tests/sender.o tests/packet_implem.o -lz -lcunit
 	make clean
 	./tests
 
 tests/tests.o: tests/tests.c tests/sender.h
-	$(CC) $(CFLAGS) -o tests/tests.o -c tests/tests.c
+	$(CC) $(CFLAGS) -o tests/tests.o -c tests/tests.c -lcunit
 
 all:
 	make
