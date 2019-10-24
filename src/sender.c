@@ -242,7 +242,7 @@ status_code addToBuffer(pkt_t *pkt) {
     // adds the packet that was just sent to the buffer and sets the different struct fields
 
     int i;
-    for (i = 0; i < 31 && sent_packets[i] != NULL; i++); // set i to the correct index value
+    for (i = 0; i < BUFFER_SIZE && sent_packets[i] != NULL; i++); // set i to the correct index value
     sent_packets[i] = sent_pkt;
 
     nbElemBuf++;
