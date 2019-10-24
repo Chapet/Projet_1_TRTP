@@ -1,3 +1,49 @@
+commit 408eff5111cd9057d789b28f2cb38d1915876d11
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:59:36 2019 +0200
+
+    Working
+
+ Submitable/Makefile | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
+
+commit 0659068c45166998a64c1638d1590adfc1414be0
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:53:47 2019 +0200
+
+    Makefile tweaks
+
+ Submitable/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit 0b872493177f6d336da690f7a589669f145bfea7
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:52:08 2019 +0200
+
+    Submitable corrections
+
+ Submitable/tests/tests.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit b9dc859546489c8f3f03c0fc7dc2dde59069f621
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:49:09 2019 +0200
+
+    Submitable folder added
+
+ Submitable/Makefile               |    30 +
+ Submitable/gitlog.stat            |   878 ++
+ Submitable/src/main.c             |    41 +
+ Submitable/src/packet_implem.c    |   341 +
+ Submitable/src/packet_interface.h |   209 +
+ Submitable/src/sender.c           |   280 +
+ Submitable/src/sender.h           |   151 +
+ Submitable/tests/large_input.txt  | 20899 ++++++++++++++++++++++++++++++++++++
+ Submitable/tests/small_input.txt  |   327 +
+ Submitable/tests/tests.c          |   185 +
+ tests                             |   Bin 28864 -> 28864 bytes
+ 11 files changed, 23341 insertions(+)
+
 commit 109b377cea72e5ba20b7e4158f29db4e9cac03ff
 Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
 Date:   Tue Oct 22 15:40:16 2019 +0200

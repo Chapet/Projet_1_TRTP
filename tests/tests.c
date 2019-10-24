@@ -5,36 +5,25 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include "sender.h"
+#include "../src/sender.h"
 int acks;
 
 int sender_setup(void) {
     int i;
     acks = rand() % BUFFER_SIZE;
     nbElemBuf = 0;
-    //acks=10;
-    if(acks==0) acks++;
-    for(i=0; i < acks; i++) {
+    for(i=0; i <= acks; i++) {
         pkt_t * pkt = pkt_new();
         pkt_set_type(pkt, 1);
         pkt_set_tr(pkt, 0);
         pkt_set_window(pkt, 0);
         pkt_set_seqnum(pkt, i);
-        char str[14];
-        sprintf(str,"Payload no. %d", i);
-        pkt_set_payload(pkt, str, 14);
+        pkt_set_payload(pkt, "Test payload", 13);
         addToBuffer(pkt);
     }
-    curr_seqnum = 0;
+    curr_seqnum = acks;
     best_expected = 0;
     toRemove=0;
-    recWindowFree = 31;
-    retransmission_timer = 2;
-    already_sent = 0;
-    deadlock_timeout = 30; // 2 min timeout if nothing is received and we can't send anything
-    isSocketReady = true;
-    isFinished = false;
-    fastRetrans = (counter_t){0,0};
     return 0;
 }
 
@@ -140,23 +129,26 @@ int main(int argc, char *argv[]) {
 
     // Sender
 
-    CU_pSuite pIsUsefulAckSuite = NULL;
-    pIsUsefulAckSuite = CU_add_suite("isUsefulAck_suite", sender_setup, sender_teardown);
-    if (NULL == pIsUsefulAckSuite) {
+    CU_pSuite pSenderSuite = NULL;
+    pSenderSuite = CU_add_suite("sender_suite", sender_setup, sender_teardown);
+    if (NULL == pSenderSuite) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
+    /*
     if (NULL == CU_add_test(pIsUsefulAckSuite, "addToBuffer() Test", addToBuffer_test)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
+    */
 
-    if (NULL == CU_add_test(pIsUsefulAckSuite, "isUsefulAck() Test", isUsefulAck_test)) {
+    if (NULL == CU_add_test(pSenderSuite, "isUsefulAck() Test", isUsefulAck_test)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
+    /*
     if (NULL == CU_add_test(pIsUsefulAckSuite, "getFromBuffer() Test", getFromBuffer_test)) {
         CU_cleanup_registry();
         return CU_get_error();
@@ -176,6 +168,7 @@ int main(int argc, char *argv[]) {
         CU_cleanup_registry();
         return CU_get_error();
     }
+     */
 
     // Run tests
     CU_basic_run_tests();
