@@ -28,7 +28,7 @@ int main(const int argc, char *argv[]) {
     port = malloc(size);
     memcpy(port, argv[optind + 1], size);
 
-    isSocketReady = false;
+    //isSocketReady = false;
 
     status_code ret = scheduler(filename);
     if (ret != STATUS_OK) {
