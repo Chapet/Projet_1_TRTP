@@ -2,7 +2,7 @@
 
 
 status_code scheduler(char *filename) {
-
+//TODO : si receiver injoignable, sleep(10)
     status_code init_ret = init(filename);
     if (init_ret != STATUS_OK) return init_ret;
     // side-note : there is no need to free an variable that wasn't obtained via malloc()/calloc()/realloc()
