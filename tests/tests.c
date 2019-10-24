@@ -1,4 +1,4 @@
-#include <stdlib.h>
+    #include <stdlib.h>
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
 #include <stdio.h>
@@ -6,13 +6,18 @@
 #include <unistd.h>
 
 #include "../src/sender.h"
-int acks;
+int log_fd;
 
 int sender_setup(void) {
+    log_fd = open("tests.log", O_TRUNC | O_CREAT | O_RDWR, S_IRWXU);
+    if(log_fd==-1) {
+        printf("Creation of file tests.log has failed : logs redirected to stdin\n");
+        log_fd = STDIN_FILENO;
+    }
     int i;
-    acks = rand() % BUFFER_SIZE;
+    int acks = rand() % BUFFER_SIZE;
     nbElemBuf = 0;
-    for(i=0; i <= acks; i++) {
+    for(i=0; i < acks; i++) {
         pkt_t * pkt = pkt_new();
         pkt_set_type(pkt, 1);
         pkt_set_tr(pkt, 0);
@@ -24,6 +29,19 @@ int sender_setup(void) {
     curr_seqnum = acks;
     best_expected = 0;
     toRemove=0;
+    ssize_t nBytes = write(log_fd, "Content of sent_packets :\n", 26);
+    if(nBytes != 26) {
+        printf("Error while writing the log file\n");
+    }
+    for(i=0; i<nbElemBuf; i++) {
+        char buffer[42];
+        snprintf(buffer, sizeof(buffer), "Packet %d in sent_packets with seqnum = %d\n", i, sent_packets[i]->pkt->Seqnum);
+        nBytes = write(log_fd, buffer, 42);
+        if(nBytes != 42) {
+            printf("Error while writing the log file\n");
+        }
+
+    }
     return 0;
 }
 
@@ -34,33 +52,45 @@ int sender_teardown(void) {
         free(sent_packets[i]);
         sent_packets[i] = NULL;
     }
+    close(log_fd);
     return 0;
 }
 
 void addToBuffer_test(void) {
-    pkt_t * pkt = pkt_new();
-    pkt_set_type(pkt, 1);
-    pkt_set_tr(pkt, 0);
-    pkt_set_window(pkt, 0);
-    pkt_set_seqnum(pkt, 42);
-    char str[14];
-    sprintf(str,"Payload no. %d", acks+1);
-    pkt_set_payload(pkt, str, 14);
-    addToBuffer(pkt);
-    CU_ASSERT_EQUAL(sent_packets[nbElemBuf-1]->pkt, pkt);
-    //printf("%p == %p ?\n", sent_packets[nbElemBuf-1]->pkt,pkt);
-    CU_ASSERT_EQUAL(sent_packets[nbElemBuf-1]->pkt->Seqnum, 42);
-    pkt_del(sent_packets[nbElemBuf-1]->pkt);
-    free(sent_packets[nbElemBuf-1]);
-    sent_packets[nbElemBuf-1] = NULL;
-    nbElemBuf--;
+    int i;
+    int acks = rand() % BUFFER_SIZE;
+    pkt_t * pkts[acks+1];
+    nbElemBuf = 0;
+    for(i=0; i <= acks; i++) {
+        pkt_t * pkt = pkt_new();
+        pkt_set_type(pkt, 1);
+        pkt_set_tr(pkt, 0);
+        pkt_set_window(pkt, 0);
+        pkt_set_seqnum(pkt, i);
+        pkt_set_payload(pkt, "Test payload", 13);
+        pkts[i] = pkt;
+        addToBuffer(pkt);
+    }
+    curr_seqnum = acks;
+    best_expected = 0;
+    toRemove=0;
+    for(i=0; i <= acks; i++) {
+        CU_ASSERT_EQUAL(sent_packets[i]->pkt, pkts[i]);
+        CU_ASSERT_EQUAL(sent_packets[i]->pkt->Seqnum, i);
+        pkt_del(sent_packets[i]->pkt);
+        free(sent_packets[i]);
+        sent_packets[i] = NULL;
+        nbElemBuf--;
+    }
     return;
 }
 
 void isUsefulAck_test(void) {
     int i;
     for(i=0; i <= nbElemBuf; i++) {
-        CU_ASSERT_EQUAL(isUsefulAck(i), true);
+        bool ret = isUsefulAck(i);
+        printf("isUsefulAck(i) with i = %d returned %d\n",i,ret);
+        CU_ASSERT_EQUAL(ret, true);
     }
     for(i=nbElemBuf+1; i < BUFFER_SIZE; i++) {
         CU_ASSERT_EQUAL(isUsefulAck(i), false);
@@ -127,48 +157,53 @@ int main(int argc, char *argv[]) {
     if (CUE_SUCCESS != CU_initialize_registry())
         return CU_get_error();
 
-    // Sender
+    CU_pSuite pAddToBufferSuite = NULL;
+    pAddToBufferSuite = CU_add_suite("addToBuffer_suite", NULL, NULL);
+    if (NULL == pAddToBufferSuite) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
+    if (NULL == CU_add_test(pAddToBufferSuite, "addToBuffer() Test", addToBuffer_test)) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
 
     CU_pSuite pSenderSuite = NULL;
     pSenderSuite = CU_add_suite("sender_suite", sender_setup, sender_teardown);
     if (NULL == pSenderSuite) {
         CU_cleanup_registry();
         return CU_get_error();
-    }
-
-    /*
-    if (NULL == CU_add_test(pIsUsefulAckSuite, "addToBuffer() Test", addToBuffer_test)) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-    */
+    }  
 
     if (NULL == CU_add_test(pSenderSuite, "isUsefulAck() Test", isUsefulAck_test)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
+    
+    if (NULL == CU_add_test(pSenderSuite, "getFromBuffer() Test", getFromBuffer_test)) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+    
+    if (NULL == CU_add_test(pSenderSuite, "resendExpiredPkt() Test", resendExpiredPkt_test)) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
+    if (NULL == CU_add_test(pSenderSuite, "removeFromSent() Test", removeFromSent_test)) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
     /*
-    if (NULL == CU_add_test(pIsUsefulAckSuite, "getFromBuffer() Test", getFromBuffer_test)) {
+    if (NULL == CU_add_test(pSenderSuite, "emptyBuffer() Test", emptyBuffer_test)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
-
-    if (NULL == CU_add_test(pIsUsefulAckSuite, "resendExpiredPkt() Test", resendExpiredPkt_test)) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-
-    if (NULL == CU_add_test(pIsUsefulAckSuite, "removeFromSent() Test", removeFromSent_test)) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-
-    if (NULL == CU_add_test(pIsUsefulAckSuite, "emptyBuffer() Test", emptyBuffer_test)) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-     */
+    */
+    
 
     // Run tests
     CU_basic_run_tests();
