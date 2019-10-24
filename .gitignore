@@ -4,3 +4,10 @@
 cmake-build-debug/
 
 CMakeLists.txt
+tests.log
+Submitable/sender
+Submitable/tests.out
+sender
+src/main.o
+src/packet_implem.o
+src/sender.o

@@ -27,7 +27,6 @@ int sender_setup(void) {
         addToBuffer(pkt);
     }
     curr_seqnum = acks;
-    best_expected = 0;
     toRemove=0;
     ssize_t nBytes = write(log_fd, "Content of sent_packets :\n", 26);
     if(nBytes != 26) {
@@ -72,7 +71,6 @@ void addToBuffer_test(void) {
         addToBuffer(pkt);
     }
     curr_seqnum = acks;
-    best_expected = 0;
     toRemove=0;
     for(i=0; i <= acks; i++) {
         CU_ASSERT_EQUAL(sent_packets[i]->pkt, pkts[i]);
@@ -88,12 +86,24 @@ void addToBuffer_test(void) {
 void isUsefulAck_test(void) {
     int i;
     for(i=0; i <= nbElemBuf; i++) {
+        char buffer[54];
         bool ret = isUsefulAck(i);
-        printf("isUsefulAck(i) with i = %d returned %d\n",i,ret);
+        snprintf("isUsefulAck(i) with i = %d returned %d\n with expected 1",i,ret);
+        nBytes = write(log_fd, buffer, 54);
+        if(nBytes != 54) {
+            printf("Error while writing the log file\n");
+        }
         CU_ASSERT_EQUAL(ret, true);
     }
     for(i=nbElemBuf+1; i < BUFFER_SIZE; i++) {
-        CU_ASSERT_EQUAL(isUsefulAck(i), false);
+        char buffer[54];
+        bool ret = isUsefulAck(i);
+        snprintf("isUsefulAck(i) with i = %d returned %d\n with expected 0",i,ret);
+        nBytes = write(log_fd, buffer, 54);
+        if(nBytes != 54) {
+            printf("Error while writing the log file\n");
+        }
+        CU_ASSERT_EQUAL(ret, false);
     }
     return;
 }

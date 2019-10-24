@@ -63,6 +63,7 @@ status_code init(char *filename) {
     socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
     if (socket_fd == -1) {
         close(file_fd);
+        printf("(socket error) Errno : %s\n", strerror(errno));
         return E_CONNECT;
     }
 
@@ -71,6 +72,7 @@ status_code init(char *filename) {
     hints.ai_socktype = SOCK_DGRAM; // diagram connectionless
     if (getaddrinfo(hostname, port, &hints, &servinfo) != 0) { //hostname : ipV6 address or hostname
         close(file_fd);
+        printf("(getaddrinfo error) Errno : %s\n", strerror(errno));
         return E_CONNECT;
     }
 
@@ -81,6 +83,7 @@ status_code init(char *filename) {
 
     if (connect(socket_fd, dest_addr, addrlen) == -1) {
         close(file_fd);
+        printf("(connect error) Errno : %s\n", strerror(errno));
         return E_CONNECT;
     }
 
