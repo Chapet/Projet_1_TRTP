@@ -140,23 +140,26 @@ int main(int argc, char *argv[]) {
 
     // Sender
 
-    CU_pSuite pIsUsefulAckSuite = NULL;
-    pIsUsefulAckSuite = CU_add_suite("isUsefulAck_suite", sender_setup, sender_teardown);
-    if (NULL == pIsUsefulAckSuite) {
+    CU_pSuite pSenderSuite = NULL;
+    pSenderSuite = CU_add_suite("sender_suite", sender_setup, sender_teardown);
+    if (NULL == pSenderSuite) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
+    /*
     if (NULL == CU_add_test(pIsUsefulAckSuite, "addToBuffer() Test", addToBuffer_test)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
+    */
 
-    if (NULL == CU_add_test(pIsUsefulAckSuite, "isUsefulAck() Test", isUsefulAck_test)) {
+    if (NULL == CU_add_test(pSenderSuite, "isUsefulAck() Test", isUsefulAck_test)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
 
+    /*
     if (NULL == CU_add_test(pIsUsefulAckSuite, "getFromBuffer() Test", getFromBuffer_test)) {
         CU_cleanup_registry();
         return CU_get_error();
@@ -176,6 +179,7 @@ int main(int argc, char *argv[]) {
         CU_cleanup_registry();
         return CU_get_error();
     }
+     */
 
     // Run tests
     CU_basic_run_tests();
