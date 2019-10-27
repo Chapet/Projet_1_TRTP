@@ -110,7 +110,7 @@ pkt_t *getFromBuffer(uint8_t seqnum);
  * @seqnum: the sequence number received in an ack packet
  * @return: true if the global variables toRemove & recWindowFree were updated, false otherwise
  */
-bool isUsefulAck(uint8_t seqnum);
+bool isUsefulAck(uint8_t seqnum, uint32_t timestamp);
 
 /**
  * Removes the (toRemove) first(s) packet(s) from the sent_packets buffer, and shifts the other elements accordingly.

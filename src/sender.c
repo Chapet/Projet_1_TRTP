@@ -1,6 +1,5 @@
 #include "sender.h"
 
-// TODO : ajouter une fonction cleanup en cas d'erreur ?
 status_code scheduler(char *filename) {
     status_code init_ret = init(filename);
     if (init_ret != STATUS_OK) return init_ret;
@@ -81,12 +80,12 @@ status_code init(char *filename) {
 
     uint8_t cannotConnect = 0;
 
-    TRYCONNECT : // if the connection is not successful, we sleep and try again every second for 15 seconds
-    if (connect(socket_fd, dest_addr, addrlen) == -1) {
+    //TRYCONNECT : // if the connection is not successful, we sleep and try again every second for 15 seconds
+    while (connect(socket_fd, dest_addr, addrlen) == -1) {
         if (cannotConnect < 15) {
             cannotConnect++;
             sleep(1);
-            goto TRYCONNECT;
+            continue;
         } else {
             close(file_fd);
             printf("(connect error) Errno : %s\n", strerror(errno));
@@ -128,7 +127,8 @@ status_code emptySocket() {
         if (status == PKT_OK) {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             if (pkt->Type == 2) {
-                if (isUsefulAck(pkt->Seqnum)) { // pkt is PTYPE_ACK & is present in the sent_packets buffer
+                if (isUsefulAck(pkt->Seqnum,
+                                pkt->Timestamp)) { // pkt is PTYPE_ACK & is present in the sent_packets buffer
                     recWindowFree = pkt->Window;
                     already_sent = 0;
                     if (fastRetrans.ack_seq == pkt->Seqnum) {
@@ -167,16 +167,14 @@ pkt_t *getFromBuffer(uint8_t seqnum) {
     return NULL;
 }
 
-bool isUsefulAck(uint8_t seqnum) {
+bool isUsefulAck(uint8_t seqnum, uint32_t timestamp) {
     if (nbElemBuf == 0) {
         return false;
     }
     uint8_t tmp = (uint8_t) (seqnum - sent_packets[0]->pkt->Seqnum);
-    if (tmp <= nbElemBuf) { // TODO : use the timestamp to check if the pkt is an old pkt
-        if (tmp >= toRemove) {
-            toRemove = tmp;
-            return true;
-        }
+    if (tmp <= nbElemBuf && tmp >= toRemove && timestamp >= sent_packets[0]->pkt->Timestamp) {
+        toRemove = tmp;
+        return true;
     }
     return false;
 }

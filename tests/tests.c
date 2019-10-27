@@ -15,7 +15,8 @@ int sender_setup(void) {
         log_fd = STDIN_FILENO;
     }
     int i;
-    int acks = rand() % BUFFER_SIZE;
+    int acks = rand() % BUFFER_SIZE-1;
+    acks++;
     nbElemBuf = 0;
     for(i=0; i < acks; i++) {
         pkt_t * pkt = pkt_new();
@@ -26,6 +27,7 @@ int sender_setup(void) {
         pkt_set_payload(pkt, "Test payload", 13);
         addToBuffer(pkt);
     }
+
     curr_seqnum = acks;
     toRemove=0;
     ssize_t nBytes = write(log_fd, "Content of sent_packets :\n", 26);
@@ -84,26 +86,30 @@ void addToBuffer_test(void) {
 }
 
 void isUsefulAck_test(void) {
+    if(nbElemBuf==0) {
+        CU_ASSERT_FALSE(isUsefulAck(0, time(NULL)));
+        return;
+    }
     int i;
     for(i=0; i <= nbElemBuf; i++) {
         char buffer[54];
-        bool ret = isUsefulAck(i);
-        snprintf("isUsefulAck(i) with i = %d returned %d\n with expected 1",i,ret);
-        nBytes = write(log_fd, buffer, 54);
+        bool ret = isUsefulAck(i, time(NULL));
+        snprintf(buffer, 54, "isUsefulAck(i) with i = %d returned %d\n with expected 1",i,ret);
+        int nBytes = write(log_fd, buffer, 54);
         if(nBytes != 54) {
             printf("Error while writing the log file\n");
         }
-        CU_ASSERT_EQUAL(ret, true);
+        CU_ASSERT_TRUE(ret);
     }
     for(i=nbElemBuf+1; i < BUFFER_SIZE; i++) {
         char buffer[54];
-        bool ret = isUsefulAck(i);
-        snprintf("isUsefulAck(i) with i = %d returned %d\n with expected 0",i,ret);
-        nBytes = write(log_fd, buffer, 54);
+        bool ret = isUsefulAck(i, time(NULL));
+        snprintf(buffer, 54,"isUsefulAck(i) with i = %d returned %d\n with expected 0",i,ret);
+        int nBytes = write(log_fd, buffer, 54);
         if(nBytes != 54) {
             printf("Error while writing the log file\n");
         }
-        CU_ASSERT_EQUAL(ret, false);
+        CU_ASSERT_FALSE(ret);
     }
     return;
 }
@@ -126,7 +132,7 @@ void resendExpiredPkt_test(void) {
     resendExpiredPkt();
     int i;
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
-        CU_ASSERT_EQUAL(time(NULL) - sent_packets[i]->timer < 2, true);
+        CU_ASSERT_TRUE(time(NULL) - sent_packets[i]->timer < 2);
     }
     return;
 }
