@@ -119,8 +119,10 @@ void removeFromSent();
 
 /**
  * Checks for each element in the buffer packet_send if the retransmission is expired, if it is, the pkt is resent.
+ *
+ * @return: 0 (STATUS_OK) if no error occurred, the correct error status_code otherwise.
  */
-void resendExpiredPkt();
+status_code resendExpiredPkt();
 
 /**
  * Encodes the pkt, sends it on the socket, increments already_sent and adds the pkt to the buffer sent_packets

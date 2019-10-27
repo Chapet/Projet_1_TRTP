@@ -1,8 +1,7 @@
 #include "sender.h"
 
-
+// TODO : ajouter une fonction cleanup en cas d'erreur ?
 status_code scheduler(char *filename) {
-//TODO : si receiver injoignable, sleep(10)
     status_code init_ret = init(filename);
     if (init_ret != STATUS_OK) return init_ret;
     // side-note : there is no need to free an variable that wasn't obtained via malloc()/calloc()/realloc()
@@ -80,11 +79,19 @@ status_code init(char *filename) {
     addrlen = servinfo->ai_addrlen;
     dest_addr = servinfo->ai_addr;
 
+    uint8_t cannotConnect = 0;
 
+    TRYCONNECT : // if the connection is not successful, we sleep and try again every second for 15 seconds
     if (connect(socket_fd, dest_addr, addrlen) == -1) {
-        close(file_fd);
-        printf("(connect error) Errno : %s\n", strerror(errno));
-        return E_CONNECT;
+        if (cannotConnect < 15) {
+            cannotConnect++;
+            sleep(1);
+            goto TRYCONNECT;
+        } else {
+            close(file_fd);
+            printf("(connect error) Errno : %s\n", strerror(errno));
+            return E_CONNECT;
+        }
     }
 
 
@@ -131,12 +138,16 @@ status_code emptySocket() {
                     }
                     if (toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
                         fastRetrans.occ = 0;
-                        send_pkt(toResend);
+                        if (send_pkt(toResend) != STATUS_OK) {
+                            return E_SEND_PKT;
+                        }
                     }
                 }
             } else if (pkt->Type == 3 &&
                        toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packets buffer
-                send_pkt(toResend); // the packet is not acked, it is re-sent
+                if (send_pkt(toResend) != STATUS_OK) { // the packet is not acked, it is re-sent
+                    return E_SEND_PKT;
+                }
             }
         }
         isAvailable = poll(&read_fd, 1, 10);
@@ -187,13 +198,15 @@ void removeFromSent() {
     }
 }
 
-void resendExpiredPkt() {
+status_code resendExpiredPkt() {
     int i;
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
             sent_packets[i]->timer = time(NULL);
-            send_pkt(sent_packets[i]->pkt);
-            // TODO : We DO NOT check the return of send_pkt
+
+            if (send_pkt(sent_packets[i]->pkt) != STATUS_OK) {
+                return E_SEND_PKT;
+            }
         }
     }
 }
@@ -257,7 +270,9 @@ status_code emptyBuffer() {
     while (time(NULL) - startEmptying < deadlock_timeout && sent_packets[0] != NULL) {
         emptySocket();
         removeFromSent();
-        resendExpiredPkt();
+        if (resendExpiredPkt() != STATUS_OK) {
+            return E_SEND_PKT;
+        }
     }
     if (sent_packets[0] != NULL) return E_TIMEOUT;
     else return STATUS_OK;
