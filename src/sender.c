@@ -201,12 +201,12 @@ status_code resendExpiredPkt() {
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
             sent_packets[i]->timer = time(NULL);
-
             if (send_pkt(sent_packets[i]->pkt) != STATUS_OK) {
                 return E_SEND_PKT;
             }
         }
     }
+    return STATUS_OK;
 }
 
 status_code send_pkt(pkt_t *pkt) {
