@@ -105,7 +105,7 @@ status_code init(char *filename) {
 }
 
 status_code emptySocket() {
-    printif("emptySocket()\n");
+    //printf("emptySocket()\n");
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
     int isAvailable = poll(&read_fd, 1, 10); // positive if there is something to read in the socket
 
@@ -127,7 +127,7 @@ status_code emptySocket() {
                     //printf("ACK %d received !\n", pkt->Seqnum);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
-                    printf("Ack %d received !\n", pkt->Seqnum);
+                    //printf("Ack %d received !\n", pkt->Seqnum);
                     if (fastRetrans.ack_seq == pkt->Seqnum) {
                         //printf("New occurence of Ack %d\n", pkt->Seqnum);
                         fastRetrans.occ++;
@@ -135,7 +135,7 @@ status_code emptySocket() {
                         //printf("New Ack (%d) received\n", pkt->Seqnum);
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
-                    if (toResend != NULL && fastRetrans.occ > 5 && !isFinished) {
+                    if (toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
                         fastRetrans.occ = -5;
                         if (send_pkt(toResend) != STATUS_OK) {
                             return E_SEND_PKT;
@@ -145,7 +145,7 @@ status_code emptySocket() {
                 }
             } else if (pkt->Type == 3 &&
                        toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packets buffer
-                printf("Nack %d received !\n", pkt->Seqnum);
+                //printf("Nack %d received !\n", pkt->Seqnum);
                 if (send_pkt(toResend) != STATUS_OK) { // the packet is not acked, it is re-sent
                     return E_SEND_PKT;
                 }
@@ -184,12 +184,12 @@ bool isUsefulAck(uint8_t seqnum, uint32_t timestamp) {
 void removeFromSent() {
     if (toRemove > 0) {
         int i;
+        //printf("Removed until %d excluded !\n", sent_packets[toRemove-1]->pkt->Seqnum+1);
         for (i = 0; i < toRemove && sent_packets[i] != NULL; i++) {
             pkt_del(sent_packets[i]->pkt);
             free(sent_packets[i]);
             sent_packets[i] = NULL;
         }
-        printf("Removed until %d !\n", sent_packets[i]->pkt->Seqnum);
         for (i = toRemove; i < nbElemBuf && sent_packets[i] != NULL; i++) {
             sent_packets[i - toRemove] = sent_packets[i];
             sent_packets[i] = NULL;
@@ -207,7 +207,7 @@ status_code resendExpiredPkt() {
             if (send_pkt(sent_packets[i]->pkt) != STATUS_OK) {
                 return E_SEND_PKT;
             }
-            //printf("PKT %d resent !\n", sent_packets[i]->pkt->Seqnum);
+            //printf("PKT %d resent because it has expired !\n", sent_packets[i]->pkt->Seqnum);
         }
     }
     return STATUS_OK;
@@ -254,7 +254,7 @@ status_code sender(char *data, uint16_t len) {
     pkt_set_payload(pkt, data, len);
     status_code status = send_pkt(pkt);
     if (status == STATUS_OK) {
-        printf("PKT %d sent !\n", pkt->Seqnum);
+        //printf("PKT %d sent !\n", pkt->Seqnum);
         addToBuffer(pkt);
         curr_seqnum++;
     }
