@@ -79,9 +79,10 @@ status_code init(char *filename) {
     dest_addr = servinfo->ai_addr;
 
     uint8_t cannotConnect = 0;
+    char *buf = "ping";
 
-    //TRYCONNECT : // if the connection is not successful, we sleep and try again every second for 15 seconds
-    while (connect(socket_fd, dest_addr, addrlen) == -1) {
+    // if the connection is not successful, we sleep and try again every second for 15 seconds
+    while (connect(socket_fd, dest_addr, addrlen) == -1 || send(socket_fd, buf, 5, 0) == -1) {
         if (cannotConnect < 15) {
             cannotConnect++;
             sleep(1);
