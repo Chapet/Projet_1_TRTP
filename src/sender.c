@@ -17,7 +17,8 @@ status_code scheduler(char *filename) {
         removeFromSent();
         resendExpiredPkt();
 
-        while ((recWindowFree - already_sent) != 0 && nbElemBuf < BUFFER_SIZE) {
+        while ((recWindowFree - already_sent) > 0 && nbElemBuf < BUFFER_SIZE) {
+            //printf("recWindowFree - already_sent = %d and nbElemBuf = %d\n", recWindowFree-already_sent, nbElemBuf);
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
             if (nBytes > 0) {
@@ -34,7 +35,7 @@ status_code scheduler(char *filename) {
                 if (status != STATUS_OK) {
                     return status;
                 }
-                sleep(2);
+                sleep(1);
                 status = sender(NULL, 0); // send the last pkt
                 if (status != STATUS_OK) return status;
                 break;
@@ -45,7 +46,7 @@ status_code scheduler(char *filename) {
     if (!isFinished) {
         return E_TIMEOUT;
     }
-    sleep(2);
+    sleep(1);
     return emptyBuffer();
 }
 
@@ -59,7 +60,7 @@ status_code init(char *filename) {
     }
 
     socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
-    if (socket_fd == -1) {
+    if (socket_fd < 0) {
         close(file_fd);
         printf("(socket error) Errno : %s\n", strerror(errno));
         return E_CONNECT;
@@ -78,20 +79,10 @@ status_code init(char *filename) {
     addrlen = servinfo->ai_addrlen;
     dest_addr = servinfo->ai_addr;
 
-    uint8_t cannotConnect = 0;
-    char *buf = "ping";
-
-    // if the connection is not successful, we sleep and try again every second for 15 seconds
-    while (connect(socket_fd, dest_addr, addrlen) == -1 || send(socket_fd, buf, 5, 0) == -1) {
-        if (cannotConnect < 15) {
-            cannotConnect++;
-            sleep(1);
-            continue;
-        } else {
-            close(file_fd);
-            printf("(connect error) Errno : %s\n", strerror(errno));
-            return E_CONNECT;
-        }
+    if (connect(socket_fd, dest_addr, addrlen) != 0) {
+        close(file_fd);
+        printf("(connect error) Errno : %s\n", strerror(errno));
+        return E_CONNECT;
     }
 
 
@@ -103,9 +94,9 @@ status_code init(char *filename) {
     toRemove = 0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 2;
+    retransmission_timer = 4;
     already_sent = 0;
-    deadlock_timeout = 30; // 30 sec timeout if nothing is received and we can't send anything
+    deadlock_timeout = 15; // 30 sec timeout if nothing is received and we can't send anything
     isFinished = false;
     fastRetrans = (counter_t) {0, 0};
     return STATUS_OK;
@@ -130,6 +121,7 @@ status_code emptySocket() {
             if (pkt->Type == 2) {
                 if (isUsefulAck(pkt->Seqnum,
                                 pkt->Timestamp)) { // pkt is PTYPE_ACK & is present in the sent_packets buffer
+                    //printf("ACK %d received !\n", pkt->Seqnum);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
                     if (fastRetrans.ack_seq == pkt->Seqnum) {
@@ -223,12 +215,14 @@ status_code send_pkt(pkt_t *pkt) {
     if (buf == NULL) {
         return E_SEND_PKT;
     }
-    // printf("Pkt %d with payload length : %d\n", pkt->Seqnum, pkt->Length);
+    
     pkt_status_code status = pkt_encode(pkt, buf, &size);
     if (status != PKT_OK) {
         return E_SEND_PKT;
     }
     ssize_t sent = send(socket_fd, buf, size, 0);
+    //printf("Pkt %d sent !\n", pkt->Seqnum);
+    usleep(1);
     if (sent == -1) {
         printf("Ernno : %d (%s) -> You should ignore this if you have launched the tests\n", errno, strerror(errno));
         return E_SEND_PKT;

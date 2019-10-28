@@ -131,7 +131,11 @@ pkt_status_code pkt_encode(const pkt_t *pkt, char *buf, size_t *len) {
     if (header_size < 0) {
         return E_LENGTH;
     }
-    if (*len < pkt_get_length(pkt) + header_size + 2 * sizeof(uint32_t)) {
+
+    if (pkt_get_length(pkt) != 0 && *len < pkt_get_length(pkt) + header_size + 2 * sizeof(uint32_t)) {
+        return E_NOMEM;
+    }
+    else if (pkt_get_length(pkt) == 0 && *len < header_size + sizeof(uint32_t)) {
         return E_NOMEM;
     }
 
@@ -156,6 +160,7 @@ pkt_status_code pkt_encode(const pkt_t *pkt, char *buf, size_t *len) {
     memcpy(buf + 10 + nBytes, pkt_get_payload(pkt), pkt_len); // encode payload
     
     if(*len > 11) {
+        //printf("Encoding pkt with a payload\n");
         uint32_t computedCRC2 = crc32(0L, Z_NULL, 0);
         computedCRC2 = crc32(computedCRC2, (uint8_t *) (pkt_get_payload(pkt)), pkt_len);
         computedCRC2 = htonl(computedCRC2);
@@ -163,7 +168,8 @@ pkt_status_code pkt_encode(const pkt_t *pkt, char *buf, size_t *len) {
         *len = 14 + nBytes + pkt_len;
     }
     else {
-        *len = 11 + sizeof(uint32_t);
+        //printf("Encoding pkt with no payload\n");
+        *len = 11;
     }
     
 
