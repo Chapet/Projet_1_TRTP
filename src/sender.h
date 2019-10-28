@@ -40,7 +40,7 @@ typedef struct buffer {
 
 typedef struct counter {
     uint8_t ack_seq;
-    uint8_t occ;
+    int8_t occ;
 } counter_t;
 
 char *hostname;

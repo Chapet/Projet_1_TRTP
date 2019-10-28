@@ -28,6 +28,7 @@ status_code scheduler(char *filename) {
                     close_fds();
                     return status;
                 }
+                //usleep(1);
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
@@ -36,6 +37,7 @@ status_code scheduler(char *filename) {
                     return status;
                 }
                 sleep(1);
+                //printf("Sending EOF packet\n");
                 status = sender(NULL, 0); // send the last pkt
                 if (status != STATUS_OK) return status;
                 break;
@@ -94,7 +96,7 @@ status_code init(char *filename) {
     toRemove = 0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 4;
+    retransmission_timer = 1;
     already_sent = 0;
     deadlock_timeout = 15; // 30 sec timeout if nothing is received and we can't send anything
     isFinished = false;
@@ -103,6 +105,7 @@ status_code init(char *filename) {
 }
 
 status_code emptySocket() {
+    printif("emptySocket()\n");
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
     int isAvailable = poll(&read_fd, 1, 10); // positive if there is something to read in the socket
 
@@ -124,23 +127,29 @@ status_code emptySocket() {
                     //printf("ACK %d received !\n", pkt->Seqnum);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
+                    printf("Ack %d received !\n", pkt->Seqnum);
                     if (fastRetrans.ack_seq == pkt->Seqnum) {
+                        //printf("New occurence of Ack %d\n", pkt->Seqnum);
                         fastRetrans.occ++;
                     } else {
+                        //printf("New Ack (%d) received\n", pkt->Seqnum);
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
-                    if (toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
-                        fastRetrans.occ = 0;
+                    if (toResend != NULL && fastRetrans.occ > 5 && !isFinished) {
+                        fastRetrans.occ = -5;
                         if (send_pkt(toResend) != STATUS_OK) {
                             return E_SEND_PKT;
                         }
+                        //printf("PKT %d fast retransmitted !\n", pkt->Seqnum);
                     }
                 }
             } else if (pkt->Type == 3 &&
                        toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packets buffer
+                printf("Nack %d received !\n", pkt->Seqnum);
                 if (send_pkt(toResend) != STATUS_OK) { // the packet is not acked, it is re-sent
                     return E_SEND_PKT;
                 }
+                //printf("Nack for PKT %d : resent !\n", pkt->Seqnum);
             }
         }
         isAvailable = poll(&read_fd, 1, 10);
@@ -180,6 +189,7 @@ void removeFromSent() {
             free(sent_packets[i]);
             sent_packets[i] = NULL;
         }
+        printf("Removed until %d !\n", sent_packets[i]->pkt->Seqnum);
         for (i = toRemove; i < nbElemBuf && sent_packets[i] != NULL; i++) {
             sent_packets[i - toRemove] = sent_packets[i];
             sent_packets[i] = NULL;
@@ -193,10 +203,11 @@ status_code resendExpiredPkt() {
     int i;
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
-            sent_packets[i]->timer = time(NULL);
+            //sent_packets[i]->timer = time(NULL);
             if (send_pkt(sent_packets[i]->pkt) != STATUS_OK) {
                 return E_SEND_PKT;
             }
+            //printf("PKT %d resent !\n", sent_packets[i]->pkt->Seqnum);
         }
     }
     return STATUS_OK;
@@ -211,6 +222,8 @@ status_code send_pkt(pkt_t *pkt) {
         size = predict_header_length(pkt) + sizeof(uint32_t);
     }
 
+    pkt_set_timestamp(pkt, time(NULL));
+
     char *buf = malloc(size);
     if (buf == NULL) {
         return E_SEND_PKT;
@@ -222,7 +235,6 @@ status_code send_pkt(pkt_t *pkt) {
     }
     ssize_t sent = send(socket_fd, buf, size, 0);
     //printf("Pkt %d sent !\n", pkt->Seqnum);
-    usleep(1);
     if (sent == -1) {
         printf("Ernno : %d (%s) -> You should ignore this if you have launched the tests\n", errno, strerror(errno));
         return E_SEND_PKT;
@@ -238,10 +250,11 @@ status_code sender(char *data, uint16_t len) {
     pkt_set_tr(pkt, 0);
     pkt_set_window(pkt, 0);
     pkt_set_seqnum(pkt, curr_seqnum);
-    pkt_set_timestamp(pkt, time(NULL));
+    //pkt_set_timestamp(pkt, time(NULL));
     pkt_set_payload(pkt, data, len);
     status_code status = send_pkt(pkt);
     if (status == STATUS_OK) {
+        printf("PKT %d sent !\n", pkt->Seqnum);
         addToBuffer(pkt);
         curr_seqnum++;
     }
