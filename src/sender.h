@@ -58,6 +58,7 @@ uint8_t nbElemBuf; // number of elements in the buffer sent_packets
 uint8_t recWindowFree; // number of empty spaces in the receiver window
 uint8_t toRemove; // number of element(s) to remove from the buffer sent_packets during removeFromSent()
 uint8_t already_sent; // counts the number of pkt sent (new sent pkt, nack & retransmission)
+int oldest_timestamp;
 bool isFinished; // indicates if the program sent all the data (excluding the EOF-signaling packet)
 counter_t fastRetrans; // used to check if the ack packets indicate a specific packet to retransmit
 // (meaning he was probably not correctly received)

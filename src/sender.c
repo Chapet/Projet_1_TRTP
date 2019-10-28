@@ -8,7 +8,6 @@ status_code scheduler(char *filename) {
     char buf[512];
     time_t start = time(NULL);
     while (!isFinished && time(NULL) - start < deadlock_timeout) {
-
         status_code status = emptySocket();
         if (status != STATUS_OK) {
             close_fds();
@@ -17,7 +16,7 @@ status_code scheduler(char *filename) {
         removeFromSent();
         resendExpiredPkt();
 
-        while ((recWindowFree - already_sent) > 0 && nbElemBuf < BUFFER_SIZE) {
+        while ((uint8_t)(recWindowFree - already_sent) != 0u && nbElemBuf < BUFFER_SIZE) {
             //printf("recWindowFree - already_sent = %d and nbElemBuf = %d\n", recWindowFree-already_sent, nbElemBuf);
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
@@ -28,7 +27,7 @@ status_code scheduler(char *filename) {
                     close_fds();
                     return status;
                 }
-                //usleep(1);
+                usleep(1);
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
@@ -93,12 +92,13 @@ status_code init(char *filename) {
         sent_packets[i] = NULL;
     }
     curr_seqnum = 0;
+    oldest_timestamp = 0;
     toRemove = 0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 1;
+    retransmission_timer = 2;
     already_sent = 0;
-    deadlock_timeout = 15; // 30 sec timeout if nothing is received and we can't send anything
+    deadlock_timeout = 30; // 30 sec timeout if nothing is received and we can't send anything
     isFinished = false;
     fastRetrans = (counter_t) {0, 0};
     return STATUS_OK;
@@ -127,7 +127,7 @@ status_code emptySocket() {
                     //printf("ACK %d received !\n", pkt->Seqnum);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
-                    //printf("Ack %d received !\n", pkt->Seqnum);
+                    //printf("Useful ack %d received !\n", pkt->Seqnum);
                     if (fastRetrans.ack_seq == pkt->Seqnum) {
                         //printf("New occurence of Ack %d\n", pkt->Seqnum);
                         fastRetrans.occ++;
@@ -143,6 +143,11 @@ status_code emptySocket() {
                         //printf("PKT %d fast retransmitted !\n", pkt->Seqnum);
                     }
                 }
+                /*
+                else {
+                    printf("Ack %d received but not useful !\n", pkt->Seqnum);
+                }
+                */
             } else if (pkt->Type == 3 &&
                        toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packets buffer
                 //printf("Nack %d received !\n", pkt->Seqnum);
@@ -171,13 +176,22 @@ pkt_t *getFromBuffer(uint8_t seqnum) {
 
 bool isUsefulAck(uint8_t seqnum, uint32_t timestamp) {
     if (nbElemBuf == 0) {
-        return false;
+        printf("isUsefulAck but no element in buffer !\n");
+        return true;
     }
     uint8_t tmp = (uint8_t) (seqnum - sent_packets[0]->pkt->Seqnum);
-    if (tmp <= nbElemBuf && tmp >= toRemove && timestamp >= sent_packets[0]->pkt->Timestamp) {
+    if (tmp <= nbElemBuf && tmp >= toRemove){ //&& timestamp >= oldest_timestamp) {
+        /*
+        printf("Timestamp received : %d\n", timestamp);
+        printf("Oldest timestamp : %d\n", oldest_timestamp);
+        */
         toRemove = tmp;
         return true;
     }
+    //printf("tmp = %d <= nbElemBuf = %d ?\ntmp = %d >= toRemove = %d ?\ntimestamp = %d >= oldest = %d ?\n",tmp,nbElemBuf, tmp, toRemove, timestamp, sent_packets[0]->pkt->Timestamp);
+    //printf("Received : Seqnum = %d\n", seqnum);
+    //printf("Timestamps : oldest = %d and newest = %d\n", sent_packets[0]->pkt->Timestamp, sent_packets[nbElemBuf-1]->pkt->Timestamp);
+    //printf("Buffer range : oldest = %d and newest = %d\n", sent_packets[0]->pkt->Seqnum, sent_packets[nbElemBuf-1]->pkt->Seqnum);
     return false;
 }
 
@@ -255,6 +269,7 @@ status_code sender(char *data, uint16_t len) {
     status_code status = send_pkt(pkt);
     if (status == STATUS_OK) {
         //printf("PKT %d sent !\n", pkt->Seqnum);
+        if(sent_packets[0] == NULL) oldest_timestamp = pkt->Timestamp;
         addToBuffer(pkt);
         curr_seqnum++;
     }
