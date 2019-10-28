@@ -96,7 +96,7 @@ status_code init(char *filename) {
     toRemove = 0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 2;
+    retransmission_timer = 1;
     already_sent = 0;
     deadlock_timeout = 30; // 30 sec timeout if nothing is received and we can't send anything
     isFinished = false;
@@ -136,7 +136,7 @@ status_code emptySocket() {
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
                     if (toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
-                        fastRetrans.occ = -5;
+                        fastRetrans.occ = 0;
                         if (send_pkt(toResend) != STATUS_OK) {
                             return E_SEND_PKT;
                         }
@@ -176,11 +176,11 @@ pkt_t *getFromBuffer(uint8_t seqnum) {
 
 bool isUsefulAck(uint8_t seqnum, uint32_t timestamp) {
     if (nbElemBuf == 0) {
-        printf("isUsefulAck but no element in buffer !\n");
+        //printf("isUsefulAck but no element in buffer !\n");
         return true;
     }
     uint8_t tmp = (uint8_t) (seqnum - sent_packets[0]->pkt->Seqnum);
-    if (tmp <= nbElemBuf && tmp >= toRemove){ //&& timestamp >= oldest_timestamp) {
+    if (tmp <= nbElemBuf && tmp >= toRemove && timestamp >= oldest_timestamp) {
         /*
         printf("Timestamp received : %d\n", timestamp);
         printf("Oldest timestamp : %d\n", oldest_timestamp);
