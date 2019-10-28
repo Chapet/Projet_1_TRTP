@@ -154,13 +154,20 @@ pkt_status_code pkt_encode(const pkt_t *pkt, char *buf, size_t *len) {
     memcpy(buf + 6 + nBytes, &computedCRC1, 4); // compute & encode CRC1
 
     memcpy(buf + 10 + nBytes, pkt_get_payload(pkt), pkt_len); // encode payload
+    
+    if(*len > 11) {
+        uint32_t computedCRC2 = crc32(0L, Z_NULL, 0);
+        computedCRC2 = crc32(computedCRC2, (uint8_t *) (pkt_get_payload(pkt)), pkt_len);
+        computedCRC2 = htonl(computedCRC2);
+        memcpy(buf + 10 + nBytes + pkt_len, &computedCRC2, 4); //compute & encode CRC2
+        *len = 14 + nBytes + pkt_len;
+    }
+    else {
+        *len = 11 + sizeof(uint32_t);
+    }
+    
 
-    uint32_t computedCRC2 = crc32(0L, Z_NULL, 0);
-    computedCRC2 = crc32(computedCRC2, (uint8_t *) (pkt_get_payload(pkt)), pkt_len);
-    computedCRC2 = htonl(computedCRC2);
-    memcpy(buf + 10 + nBytes + pkt_len, &computedCRC2, 4); //compute & encode CRC2
-
-    *len = 14 + nBytes + pkt_len;
+    
 
     return PKT_OK;
 }

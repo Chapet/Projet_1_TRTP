@@ -11,3 +11,4 @@ sender
 src/main.o
 src/packet_implem.o
 src/sender.o
+Link_Simulator/link_sim

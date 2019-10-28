@@ -210,12 +210,19 @@ status_code resendExpiredPkt() {
 }
 
 status_code send_pkt(pkt_t *pkt) {
-    size_t size =
-            predict_header_length(pkt) + pkt_get_length(pkt) + 2 * sizeof(uint32_t); // header + CRC1 + payload + CRC2
+    size_t size;
+    if (pkt_get_length(pkt) != 0) {
+        size = predict_header_length(pkt) + pkt_get_length(pkt) + 2 * sizeof(uint32_t); // header + CRC1 + payload + CRC2
+    }
+    else {
+        size = predict_header_length(pkt) + sizeof(uint32_t);
+    }
+
     char *buf = malloc(size);
     if (buf == NULL) {
         return E_SEND_PKT;
     }
+    // printf("Pkt %d with payload length : %d\n", pkt->Seqnum, pkt->Length);
     pkt_status_code status = pkt_encode(pkt, buf, &size);
     if (status != PKT_OK) {
         return E_SEND_PKT;
