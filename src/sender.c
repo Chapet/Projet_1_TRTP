@@ -8,6 +8,7 @@ status_code scheduler(char *filename) {
     char buf[512];
     time_t start = time(NULL);
     while (!isFinished && time(NULL) - start < deadlock_timeout) {
+        //printf("Before\n");
         status_code status = emptySocket();
         if (status != STATUS_OK) {
             close_fds();
@@ -15,9 +16,11 @@ status_code scheduler(char *filename) {
         }
         removeFromSent();
         resendExpiredPkt();
-
+        //printf("After\n");
+        //if ((uint8_t)(recWindowFree - already_sent) == 0u || nbElemBuf >= BUFFER_SIZE) printf("recWindowFree %d already_sent %d nbElemBuf %d\n", recWindowFree, already_sent, nbElemBuf);
         while ((uint8_t)(recWindowFree - already_sent) != 0u && nbElemBuf < BUFFER_SIZE) {
             //printf("recWindowFree - already_sent = %d and nbElemBuf = %d\n", recWindowFree-already_sent, nbElemBuf);
+            //printf("Sending %d\n", curr_seqnum);
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
             if (nBytes > 0) {
@@ -27,7 +30,7 @@ status_code scheduler(char *filename) {
                     close_fds();
                     return status;
                 }
-                usleep(1);
+                //usleep(1);
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
@@ -35,7 +38,7 @@ status_code scheduler(char *filename) {
                 if (status != STATUS_OK) {
                     return status;
                 }
-                sleep(1);
+                //sleep(1);
                 //printf("Sending EOF packet\n");
                 status = sender(NULL, 0); // send the last pkt
                 if (status != STATUS_OK) return status;
@@ -125,6 +128,7 @@ status_code emptySocket() {
                 if (isUsefulAck(pkt->Seqnum,
                                 pkt->Timestamp)) { // pkt is PTYPE_ACK & is present in the sent_packets buffer
                     //printf("ACK %d received !\n", pkt->Seqnum);
+                    //printf("recWindowFree %d\n", recWindowFree);
                     recWindowFree = pkt->Window;
                     already_sent = 0;
                     //printf("Useful ack %d received !\n", pkt->Seqnum);
