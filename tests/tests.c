@@ -87,7 +87,8 @@ void addToBuffer_test(void) {
 
 void isUsefulAck_test(void) {
     if(nbElemBuf==0) {
-        CU_ASSERT_FALSE(isUsefulAck(0, time(NULL)));
+        CU_ASSERT_TRUE(isUsefulAck(0, time(NULL)));
+        printf("isUsefulAck with no element returned true !\n");
         return;
     }
     int i;

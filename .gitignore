@@ -14,3 +14,5 @@ src/sender.o
 Link_Simulator/link_sim
 
 receiver
+
+tests.out
