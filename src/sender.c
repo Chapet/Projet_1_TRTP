@@ -8,7 +8,6 @@ status_code scheduler(char *filename) {
     char buf[512];
     time_t start = time(NULL);
     while (!isFinished && time(NULL) - start < deadlock_timeout) {
-        //printf("Before\n");
         status_code status = emptySocket();
         if (status != STATUS_OK) {
             close_fds();
@@ -16,11 +15,11 @@ status_code scheduler(char *filename) {
         }
         removeFromSent();
         resendExpiredPkt();
-        //printf("After\n");
-        //if ((uint8_t)(recWindowFree - already_sent) == 0u || nbElemBuf >= BUFFER_SIZE) printf("recWindowFree %d already_sent %d nbElemBuf %d\n", recWindowFree, already_sent, nbElemBuf);
-        while ((uint8_t)(recWindowFree - already_sent) != 0u && nbElemBuf < BUFFER_SIZE) {
-            //printf("recWindowFree - already_sent = %d and nbElemBuf = %d\n", recWindowFree-already_sent, nbElemBuf);
-            //printf("Sending %d\n", curr_seqnum);
+        if (recWindowFree == 0 && nbElemBuf == 0) {
+            usleep(10);
+            recWindowFree++;
+        }
+        while ((uint8_t)(recWindowFree - already_sent - nbElemBuf) != 0u && nbElemBuf < BUFFER_SIZE) {
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
             if (nBytes > 0) {
@@ -110,7 +109,7 @@ status_code init(char *filename) {
 status_code emptySocket() {
     //printf("emptySocket()\n");
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
-    int isAvailable = poll(&read_fd, 1, 10); // positive if there is something to read in the socket
+    int isAvailable = poll(&read_fd, 1, 5); // positive if there is something to read in the socket
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
@@ -127,16 +126,12 @@ status_code emptySocket() {
             if (pkt->Type == 2) {
                 if (isUsefulAck(pkt->Seqnum,
                                 pkt->Timestamp)) { // pkt is PTYPE_ACK & is present in the sent_packets buffer
-                    //printf("ACK %d received !\n", pkt->Seqnum);
-                    //printf("recWindowFree %d\n", recWindowFree);
                     recWindowFree = pkt->Window;
+                    //printf("recWindowFree %d with Ack %d\n", recWindowFree, pkt->Seqnum);
                     already_sent = 0;
-                    //printf("Useful ack %d received !\n", pkt->Seqnum);
                     if (fastRetrans.ack_seq == pkt->Seqnum) {
-                        //printf("New occurence of Ack %d\n", pkt->Seqnum);
                         fastRetrans.occ++;
                     } else {
-                        //printf("New Ack (%d) received\n", pkt->Seqnum);
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
                     if (toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
@@ -144,24 +139,17 @@ status_code emptySocket() {
                         if (send_pkt(toResend) != STATUS_OK) {
                             return E_SEND_PKT;
                         }
-                        //printf("PKT %d fast retransmitted !\n", pkt->Seqnum);
                     }
                 }
-                /*
-                else {
-                    printf("Ack %d received but not useful !\n", pkt->Seqnum);
-                }
-                */
             } else if (pkt->Type == 3 &&
                        toResend != NULL) { // pkt is PTYPE_NACK & is present in the sent_packets buffer
-                //printf("Nack %d received !\n", pkt->Seqnum);
                 if (send_pkt(toResend) != STATUS_OK) { // the packet is not acked, it is re-sent
                     return E_SEND_PKT;
                 }
-                //printf("Nack for PKT %d : resent !\n", pkt->Seqnum);
+                already_sent++;
             }
         }
-        isAvailable = poll(&read_fd, 1, 10);
+        isAvailable = poll(&read_fd, 1, 5);
     }
     pkt_del(pkt);
     free(buf);
@@ -180,22 +168,13 @@ pkt_t *getFromBuffer(uint8_t seqnum) {
 
 bool isUsefulAck(uint8_t seqnum, uint32_t timestamp) {
     if (nbElemBuf == 0) {
-        //printf("isUsefulAck but no element in buffer !\n");
         return true;
     }
     uint8_t tmp = (uint8_t) (seqnum - sent_packets[0]->pkt->Seqnum);
     if (tmp <= nbElemBuf && tmp >= toRemove && timestamp >= oldest_timestamp) {
-        /*
-        printf("Timestamp received : %d\n", timestamp);
-        printf("Oldest timestamp : %d\n", oldest_timestamp);
-        */
         toRemove = tmp;
         return true;
     }
-    //printf("tmp = %d <= nbElemBuf = %d ?\ntmp = %d >= toRemove = %d ?\ntimestamp = %d >= oldest = %d ?\n",tmp,nbElemBuf, tmp, toRemove, timestamp, sent_packets[0]->pkt->Timestamp);
-    //printf("Received : Seqnum = %d\n", seqnum);
-    //printf("Timestamps : oldest = %d and newest = %d\n", sent_packets[0]->pkt->Timestamp, sent_packets[nbElemBuf-1]->pkt->Timestamp);
-    //printf("Buffer range : oldest = %d and newest = %d\n", sent_packets[0]->pkt->Seqnum, sent_packets[nbElemBuf-1]->pkt->Seqnum);
     return false;
 }
 
