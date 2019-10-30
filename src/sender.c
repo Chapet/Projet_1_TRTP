@@ -16,7 +16,7 @@ status_code scheduler(char *filename) {
         removeFromSent();
         resendExpiredPkt();
         if (recWindowFree == 0 && nbElemBuf == 0) {
-            usleep(5);
+            usleep(20);
             recWindowFree++;
         }
         while ((uint8_t)(recWindowFree - already_sent - nbElemBuf) != 0u && nbElemBuf < BUFFER_SIZE) {
@@ -29,7 +29,7 @@ status_code scheduler(char *filename) {
                     close_fds();
                     return status;
                 }
-                usleep(5);
+                usleep(20);
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
