@@ -8,15 +8,17 @@ status_code scheduler(char *filename) {
     char buf[512];
     time_t start = time(NULL);
     while (!isFinished && time(NULL) - start < deadlock_timeout) {
-        status_code status = emptySocket();
+        //printf("Before\n");
+	status_code status = emptySocket();
         if (status != STATUS_OK) {
             close_fds();
             return status;
         }
         removeFromSent();
         resendExpiredPkt();
+	//printf("After\n");
         if (recWindowFree == 0 && nbElemBuf == 0) {
-            usleep(20);
+            //usleep(20);
             recWindowFree++;
         }
         while ((uint8_t)(recWindowFree - already_sent) != 0u && nbElemBuf < BUFFER_SIZE) {
@@ -29,7 +31,7 @@ status_code scheduler(char *filename) {
                     close_fds();
                     return status;
                 }
-                usleep(20);
+                //usleep(20);
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
@@ -43,6 +45,7 @@ status_code scheduler(char *filename) {
                 if (status != STATUS_OK) return status;
                 break;
             }
+	    //printf("Packet sent\n");
             start = time(NULL);
         }
     }
@@ -98,7 +101,7 @@ status_code init(char *filename) {
     toRemove = 0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 3;
+    retransmission_timer = 1;
     already_sent = 0;
     deadlock_timeout = 30; // 30 sec timeout if nothing is received and we can't send anything
     isFinished = false;
@@ -109,7 +112,7 @@ status_code init(char *filename) {
 status_code emptySocket() {
     //printf("emptySocket()\n");
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
-    int isAvailable = poll(&read_fd, 1, 5); // positive if there is something to read in the socket
+    int isAvailable = poll(&read_fd, 1, 10); // positive if there is something to read in the socket
 
     char *buf = malloc(11); // the ack packets are 11 bytes long (7 header + 4 CRC)
     if (buf == NULL) {
@@ -124,6 +127,7 @@ status_code emptySocket() {
         if (status == PKT_OK) {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             if (pkt->Type == 2) {
+		//printf("Ack received %d\n", pkt->Seqnum);
                 if (isUsefulAck(pkt->Seqnum,
                                 pkt->Timestamp)) { // pkt is PTYPE_ACK & is present in the sent_packets buffer
                     recWindowFree = pkt->Window;
@@ -135,7 +139,7 @@ status_code emptySocket() {
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
                     if (toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
-                        fastRetrans.occ = -10;
+                        fastRetrans.occ = 0;
                         if (send_pkt(toResend) != STATUS_OK) {
                             return E_SEND_PKT;
                         }
