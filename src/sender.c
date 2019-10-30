@@ -98,7 +98,7 @@ status_code init(char *filename) {
     toRemove = 0;
     recWindowFree = 1;
     nbElemBuf = 0;
-    retransmission_timer = 1;
+    retransmission_timer = 3;
     already_sent = 0;
     deadlock_timeout = 30; // 30 sec timeout if nothing is received and we can't send anything
     isFinished = false;
