@@ -19,7 +19,7 @@ status_code scheduler(char *filename) {
             usleep(20);
             recWindowFree++;
         }
-        while ((uint8_t)(recWindowFree - already_sent - nbElemBuf) != 0u && nbElemBuf < BUFFER_SIZE) {
+        while ((uint8_t)(recWindowFree - already_sent) != 0u && nbElemBuf < BUFFER_SIZE) {
             ssize_t nBytes = read(file_fd, &buf, 512); // the amount read by read() (0 = at or past EOF)
             // Read filename/stdin and send via sender
             if (nBytes > 0) {
@@ -135,7 +135,7 @@ status_code emptySocket() {
                         fastRetrans.ack_seq = pkt->Seqnum;
                     }
                     if (toResend != NULL && fastRetrans.occ > 2 && !isFinished) {
-                        fastRetrans.occ = 0;
+                        fastRetrans.occ = -10;
                         if (send_pkt(toResend) != STATUS_OK) {
                             return E_SEND_PKT;
                         }
