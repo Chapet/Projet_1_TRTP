@@ -6,14 +6,12 @@
 #include <unistd.h>
 
 #include "../src/sender.h"
-int log_fd;
+//FILE *fp;
 
 int sender_setup(void) {
-    log_fd = open("tests.log", O_TRUNC | O_CREAT | O_RDWR, S_IRWXU);
-    if(log_fd==-1) {
-        printf("Creation of file tests.log has failed : logs redirected to stdin\n");
-        log_fd = STDIN_FILENO;
-    }
+    
+    //fp = freopen("tests.log", "w+", stdout);
+
     int i;
     int acks = rand() % BUFFER_SIZE-1;
     acks++;
@@ -30,19 +28,13 @@ int sender_setup(void) {
 
     curr_seqnum = acks;
     toRemove=0;
-    ssize_t nBytes = write(log_fd, "Content of sent_packets :\n", 26);
-    if(nBytes != 26) {
-        printf("Error while writing the log file\n");
-    }
+    /*
+    printf("Content of sent_packets :\n");
     for(i=0; i<nbElemBuf; i++) {
-        char buffer[42];
-        snprintf(buffer, sizeof(buffer), "Packet %d in sent_packets with seqnum = %d\n", i, sent_packets[i]->pkt->Seqnum);
-        nBytes = write(log_fd, buffer, 42);
-        if(nBytes != 42) {
-            printf("Error while writing the log file\n");
-        }
-
+        printf("Packet %d in sent_packets with seqnum = %d\n", i, sent_packets[i]->pkt->Seqnum);
     }
+    */
+    
     return 0;
 }
 
@@ -53,7 +45,6 @@ int sender_teardown(void) {
         free(sent_packets[i]);
         sent_packets[i] = NULL;
     }
-    close(log_fd);
     return 0;
 }
 
@@ -88,28 +79,18 @@ void addToBuffer_test(void) {
 void isUsefulAck_test(void) {
     if(nbElemBuf==0) {
         CU_ASSERT_TRUE(isUsefulAck(0, time(NULL)));
-        printf("isUsefulAck with no element returned true !\n");
+        //printf("isUsefulAck with no element returned true !\n");
         return;
     }
     int i;
     for(i=0; i <= nbElemBuf; i++) {
-        char buffer[54];
         bool ret = isUsefulAck(i, time(NULL));
-        snprintf(buffer, 54, "isUsefulAck(i) with i = %d returned %d\n with expected 1",i,ret);
-        int nBytes = write(log_fd, buffer, 54);
-        if(nBytes != 54) {
-            printf("Error while writing the log file\n");
-        }
+        //printf("isUsefulAck(i) with i = %d returned %d\n with expected 1",i,ret);
         CU_ASSERT_TRUE(ret);
     }
     for(i=nbElemBuf+1; i < BUFFER_SIZE; i++) {
-        char buffer[54];
         bool ret = isUsefulAck(i, time(NULL));
-        snprintf(buffer, 54,"isUsefulAck(i) with i = %d returned %d\n with expected 0",i,ret);
-        int nBytes = write(log_fd, buffer, 54);
-        if(nBytes != 54) {
-            printf("Error while writing the log file\n");
-        }
+        //printf("isUsefulAck(i) with i = %d returned %d\n with expected 0",i,ret);
         CU_ASSERT_FALSE(ret);
     }
     return;
@@ -168,7 +149,9 @@ void emptyBuffer_test(void) {
 
 
 int main(int argc, char *argv[]) {
-    printf("Tests are running ... \n");
+    
+
+    //printf("Tests are running ... \n");
     srand(time(NULL));
 
     if (CUE_SUCCESS != CU_initialize_registry())
@@ -225,6 +208,6 @@ int main(int argc, char *argv[]) {
     // Run tests
     CU_basic_run_tests();
     CU_basic_show_failures(CU_get_failure_list());
-
+    //fclose(fp);
     return EXIT_SUCCESS;
 }

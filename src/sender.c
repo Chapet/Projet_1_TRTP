@@ -3,12 +3,11 @@
 status_code scheduler(char *filename) {
     status_code init_ret = init(filename);
     if (init_ret != STATUS_OK) return init_ret;
-    // side-note : there is no need to free an variable that wasn't obtained via malloc()/calloc()/realloc()
+    // side-note : there is no need to free a variable that wasn't obtained via malloc()/calloc()/realloc()
 
     char buf[512];
     time_t start = time(NULL);
     while (!isFinished && time(NULL) - start < deadlock_timeout) {
-        //printf("Before\n");
 	status_code status = emptySocket();
         if (status != STATUS_OK) {
             close_fds();
@@ -16,9 +15,9 @@ status_code scheduler(char *filename) {
         }
         removeFromSent();
         resendExpiredPkt();
-	//printf("After\n");
         if (recWindowFree == 0 && nbElemBuf == 0) {
-            //usleep(20);
+            //To avoid a deadlock when receiving a window of length 0 when there isn't anything in 
+            //the sent_packets buffer.
             recWindowFree++;
         }
         while ((uint8_t)(recWindowFree - already_sent) != 0u && nbElemBuf < BUFFER_SIZE) {
@@ -31,7 +30,6 @@ status_code scheduler(char *filename) {
                     close_fds();
                     return status;
                 }
-                //usleep(20);
             } // all the packets have been sent, but maybe not received correctly
             else {
                 isFinished = true;
@@ -39,20 +37,18 @@ status_code scheduler(char *filename) {
                 if (status != STATUS_OK) {
                     return status;
                 }
-                usleep(500000);
-                //printf("Sending EOF packet\n");
+                usleep(100000);
                 status = sender(NULL, 0); // send the last pkt
                 if (status != STATUS_OK) return status;
                 break;
             }
-	    //printf("Packet sent\n");
             start = time(NULL);
         }
     }
     if (!isFinished) {
         return E_TIMEOUT;
     }
-    usleep(500000);
+    usleep(100000);
     return emptyBuffer();
 }
 
@@ -68,7 +64,7 @@ status_code init(char *filename) {
     socket_fd = socket(AF_INET6, SOCK_DGRAM, 0);
     if (socket_fd < 0) {
         close(file_fd);
-        printf("(socket error) Errno : %s\n", strerror(errno));
+        fprintf(stderr,"(socket error) Errno : %s\n", strerror(errno));
         return E_CONNECT;
     }
 
@@ -77,7 +73,7 @@ status_code init(char *filename) {
     hints.ai_socktype = SOCK_DGRAM; // diagram connectionless
     if (getaddrinfo(hostname, port, &hints, &servinfo) != 0) { //hostname : ipV6 address or hostname
         close(file_fd);
-        printf("(getaddrinfo error) Errno : %s\n", strerror(errno));
+        fprintf(stderr,"(getaddrinfo error) Errno : %s\n", strerror(errno));
         return E_CONNECT;
     }
 
@@ -87,7 +83,7 @@ status_code init(char *filename) {
 
     if (connect(socket_fd, dest_addr, addrlen) != 0) {
         close(file_fd);
-        printf("(connect error) Errno : %s\n", strerror(errno));
+        fprintf(stderr,"(connect error) Errno : %s\n", strerror(errno));
         return E_CONNECT;
     }
 
@@ -110,7 +106,6 @@ status_code init(char *filename) {
 }
 
 status_code emptySocket() {
-    //printf("emptySocket()\n");
     struct pollfd read_fd = {socket_fd, POLLIN, 0};
     int isAvailable = poll(&read_fd, 1, 10); // positive if there is something to read in the socket
 
@@ -127,11 +122,9 @@ status_code emptySocket() {
         if (status == PKT_OK) {
             pkt_t *toResend = getFromBuffer(pkt->Seqnum);
             if (pkt->Type == 2) {
-		//printf("Ack received %d\n", pkt->Seqnum);
                 if (isUsefulAck(pkt->Seqnum,
                                 pkt->Timestamp)) { // pkt is PTYPE_ACK & is present in the sent_packets buffer
                     recWindowFree = pkt->Window;
-                    //printf("recWindowFree %d with Ack %d\n", recWindowFree, pkt->Seqnum);
                     already_sent = 0;
                     if (fastRetrans.ack_seq == pkt->Seqnum) {
                         fastRetrans.occ++;
@@ -185,7 +178,6 @@ bool isUsefulAck(uint8_t seqnum, uint32_t timestamp) {
 void removeFromSent() {
     if (toRemove > 0) {
         int i;
-        //printf("Removed until %d excluded !\n", sent_packets[toRemove-1]->pkt->Seqnum+1);
         for (i = 0; i < toRemove && sent_packets[i] != NULL; i++) {
             pkt_del(sent_packets[i]->pkt);
             free(sent_packets[i]);
@@ -204,11 +196,9 @@ status_code resendExpiredPkt() {
     int i;
     for (i = 0; i < 31 && sent_packets[i] != NULL; i++) {
         if ((time(NULL) - sent_packets[i]->timer) > retransmission_timer) {
-            //sent_packets[i]->timer = time(NULL);
             if (send_pkt(sent_packets[i]->pkt) != STATUS_OK) {
                 return E_SEND_PKT;
             }
-            //printf("PKT %d resent because it has expired !\n", sent_packets[i]->pkt->Seqnum);
         }
     }
     return STATUS_OK;
@@ -235,9 +225,8 @@ status_code send_pkt(pkt_t *pkt) {
         return E_SEND_PKT;
     }
     ssize_t sent = send(socket_fd, buf, size, 0);
-    //printf("Pkt %d sent !\n", pkt->Seqnum);
     if (sent == -1) {
-        printf("Ernno : %d (%s) -> You should ignore this if you have launched the tests\n", errno, strerror(errno));
+        fprintf(stderr,"Errno : %d (%s)\n", errno, strerror(errno));
         return E_SEND_PKT;
     }
     already_sent++;
@@ -251,11 +240,9 @@ status_code sender(char *data, uint16_t len) {
     pkt_set_tr(pkt, 0);
     pkt_set_window(pkt, 0);
     pkt_set_seqnum(pkt, curr_seqnum);
-    //pkt_set_timestamp(pkt, time(NULL));
     pkt_set_payload(pkt, data, len);
     status_code status = send_pkt(pkt);
     if (status == STATUS_OK) {
-        //printf("PKT %d sent !\n", pkt->Seqnum);
         if(sent_packets[0] == NULL) oldest_timestamp = pkt->Timestamp;
         addToBuffer(pkt);
         curr_seqnum++;
