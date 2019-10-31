@@ -104,9 +104,9 @@ status_code emptySocket();
 pkt_t *getFromBuffer(uint8_t seqnum);
 
 /**
- * Checks the buffer sent_pkt for the packet with the sequence number seqnum, and if it is found, the global variable
- * toRemove may be updated if the seqnum packet brought an information that was not already known (i.e. the sequence
- * number of the ack packet was higher than the ones from the previously received ack packets).
+ * Checks if a packet of type PTYPE_ACK is useful (to update the global variable toRemove & recWindowFree) i.e. his
+ * timestamp is not outdated & his sequence number is equal to the last one useful received, or higher (up to the
+ * sequence number of the last packet in sent_packet[].
  *
  * @seqnum: the sequence number received in an ack packet
  * @return: true if the global variables toRemove & recWindowFree were updated, false otherwise
