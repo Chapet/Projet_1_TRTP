@@ -1,0 +1,1329 @@
+commit 040c8b782d836d2c4c8ae583f2f0020190eb6ceb
+Author: Hadrien Libioulle <hlibioulle@amidala.info.ucl.ac.be>
+Date:   Thu Oct 31 16:22:48 2019 +0100
+
+    Final version
+
+ src/main.c          | 21 +++++----------------
+ src/packet_implem.c |  5 -----
+ src/sender.c        | 31 +++++++++----------------------
+ tests/tests.c       | 49 ++++++++++++++++---------------------------------
+ 4 files changed, 30 insertions(+), 76 deletions(-)
+
+commit c73b1deceaa9ca37c13f06a42b5ba2c46a45cc01
+Author: Hadrien Libioulle <hlibioulle@hoth.info.ucl.ac.be>
+Date:   Wed Oct 30 19:17:44 2019 +0100
+
+    A lot faster
+
+ src/sender.c | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
+
+commit c3d50208366efde78c79096f721136ccd38e8723
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 30 18:10:42 2019 +0100
+
+    Retransmission timer set to 3s
+
+ src/sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 1437041c67aeacee0265e65adcb72c4be00b702b
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 30 18:05:31 2019 +0100
+
+    less fast retransmit
+
+ src/sender.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit 4b8bdf69a4b24832118c238eb396f4888f1f4a86
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 30 17:55:03 2019 +0100
+
+    Timer increased
+
+ src/sender.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit b54ac07641771c2df31448133bbeb34949584d62
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 30 17:52:04 2019 +0100
+
+    Timer changes
+
+ src/sender.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+commit fa5a82212a7ae615004801e70bc33a7ae2920410
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 30 16:55:12 2019 +0100
+
+    Deadlock solved
+
+ src/sender.c | 41 ++++++++++-------------------------------
+ 1 file changed, 10 insertions(+), 31 deletions(-)
+
+commit 1ebae9c8e99a34aa39607d2f7bc21e3fb934e4c5
+Merge: 4edb9c3 e9ba6d1
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 30 15:50:58 2019 +0100
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 4edb9c357042855c638fff995cd1b6e2bb34afdc
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 30 15:50:52 2019 +0100
+
+    Tests tweaks
+
+ .gitignore    | 2 ++
+ Makefile      | 2 +-
+ tests/tests.c | 3 ++-
+ 3 files changed, 5 insertions(+), 2 deletions(-)
+
+commit e9ba6d1fa44e7b33fe8e911f084966425a515477
+Author: Hadrien Libioulle <hlibioulle@hoth.info.ucl.ac.be>
+Date:   Wed Oct 30 15:49:27 2019 +0100
+
+    Tweaks trying to solve a deadlock
+
+ main.o                 |  Bin 3776 -> 0 bytes
+ packet_implem.o        |  Bin 8440 -> 0 bytes
+ sender.o               |  Bin 11256 -> 0 bytes
+ src/main.c             |   14 +-
+ src/sender.c           |   10 +-
+ tests/medium_input.txt | 4005 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 4023 insertions(+), 6 deletions(-)
+
+commit 314868b93f5510e64d47f44aabd69b127e6c199e
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 28 18:20:57 2019 +0100
+
+    Fully working with Timestamp implemented
+    
+    4Mb between a laptop and an intel machine on the LAN
+
+ src/main.c   | 8 ++++++++
+ src/sender.c | 8 ++++----
+ 2 files changed, 12 insertions(+), 4 deletions(-)
+
+commit ff6f772ce3867bd1ac2c038521641adeb6ded663
+Author: Hadrien Libioulle <hlibioulle@geonosis.info.ucl.ac.be>
+Date:   Mon Oct 28 17:51:34 2019 +0100
+
+    Bug resolved - Timestamp in acks disabled
+
+ main.o                    | Bin 0 -> 3776 bytes
+ packet_implem.o           | Bin 0 -> 8440 bytes
+ sender.o                  | Bin 0 -> 11256 bytes
+ src/.vscode/settings.json |   5 +++++
+ src/sender.c              |  31 +++++++++++++++++++++++--------
+ src/sender.h              |   1 +
+ 6 files changed, 29 insertions(+), 8 deletions(-)
+
+commit 49f2671eefb3c8168a5db79d83310c506e5037ab
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 28 16:32:01 2019 +0100
+
+    Final version
+
+ src/sender.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+commit e45d38df0cbc190dfeb3aa2f0547b514920f7013
+Author: Hadrien Libioulle <hlibioulle@geonosis.info.ucl.ac.be>
+Date:   Mon Oct 28 16:11:26 2019 +0100
+
+    Trying to resolved the fast retransmit bug
+
+ src/sender.c           |   27 +-
+ src/sender.h           |    2 +-
+ tests/medium_input.txt | 2616 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 2637 insertions(+), 8 deletions(-)
+
+commit 9ee4a866276b13d3884372f549ad40c21249445b
+Merge: 1f775e3 0dfa969
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 28 14:39:07 2019 +0100
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 1f775e32ccf86ca72388842a6b5cebe839e889ff
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 28 14:39:01 2019 +0100
+
+    ignore receiver
+
+ .gitignore | 2 ++
+ 1 file changed, 2 insertions(+)
+
+commit 0dfa9698114b8a5fb76d2b0525667960ef74c33d
+Author: Hadrien Libioulle <hlibioulle@geonosis.info.ucl.ac.be>
+Date:   Mon Oct 28 14:02:41 2019 +0100
+
+    Error when not sleeping in send_pkt
+
+ src/packet_implem.c | 10 ++++++++--
+ src/sender.c        | 36 +++++++++++++++---------------------
+ 2 files changed, 23 insertions(+), 23 deletions(-)
+
+commit ce9b2ff6c3ad0b035c45983e1c7bac4733e22b93
+Merge: 5a125dc 24f6d6b
+Author: Hadrien Libioulle <hlibioulle@geonosis.info.ucl.ac.be>
+Date:   Mon Oct 28 12:02:03 2019 +0100
+
+    Merge branch 'RemodulationPerformance' of https://github.com/Chapet/Projet_1_TRTP into RemodulationPerformance
+
+commit 5a125dc2cfae47051757ec7d7bbc949a3d23b628
+Author: Hadrien Libioulle <hlibioulle@geonosis.info.ucl.ac.be>
+Date:   Mon Oct 28 12:01:09 2019 +0100
+
+    No crc2 for packets with no payload
+
+ .gitignore              |   1 +
+ Link_Simulator/link_sim | Bin 22920 -> 37080 bytes
+ src/packet_implem.c     |  19 +++++++++++++------
+ src/sender.c            |  11 +++++++++--
+ 4 files changed, 23 insertions(+), 8 deletions(-)
+
+commit 24f6d6bbc661bf2343ddee07d6f0fe4add3cdeef
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 28 12:00:39 2019 +0100
+
+    Modify connection check
+
+ src/main.c   | 2 --
+ src/sender.c | 5 +++--
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+commit 4bc35105260bb6d496e8d73d9ab6ade9a99385a0
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Sun Oct 27 21:21:27 2019 +0100
+
+    resendExpiredPkt tweaks
+
+ src/sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit daddfd00111bfd31e8cc037dc1334302f89fcefa
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Sun Oct 27 21:16:33 2019 +0100
+
+    timestamp implem in isUsefulAck & tests tweaks
+
+ src/sender.c  | 20 +++++++++-----------
+ src/sender.h  |  2 +-
+ tests/tests.c | 26 ++++++++++++++++----------
+ 3 files changed, 26 insertions(+), 22 deletions(-)
+
+commit 5062456d9d1d027e5aa30744752056dbaff8c5b4
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sun Oct 27 10:28:06 2019 +0100
+
+    Added retry attempt for failed connection, added send_pkt return check
+
+ src/sender.c | 37 ++++++++++++++++++++++++++-----------
+ src/sender.h |  4 +++-
+ 2 files changed, 29 insertions(+), 12 deletions(-)
+
+commit 93625010652cd4d86594ae2175a28a91ab24f65a
+Author: Hadrien Libioulle <hlibioulle@windu.info.ucl.ac.be>
+Date:   Thu Oct 24 16:38:10 2019 +0200
+
+    Minor tweaks
+
+ .gitignore    |  7 +++++++
+ src/sender.c  |  3 +++
+ tests/tests.c | 18 ++++++++++++++----
+ 3 files changed, 24 insertions(+), 4 deletions(-)
+
+commit 07ae0cff5a4bc34188e1553288342002697d76eb
+Author: Hadrien Libioulle <hlibioulle@windu.info.ucl.ac.be>
+Date:   Thu Oct 24 16:16:15 2019 +0200
+
+    isSocketReady removed from main.c
+
+ src/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 3ea73b288972f5b445f1bdc5194ef5307aaacc02
+Merge: aedbaa3 89c4654
+Author: Hadrien Libioulle <hlibioulle@windu.info.ucl.ac.be>
+Date:   Thu Oct 24 16:10:51 2019 +0200
+
+    Merge branch 'RemodulationPerformance' of https://github.com/Chapet/Projet_1_TRTP into RemodulationPerformance
+
+commit aedbaa3d582a8d9e97fe2ce7bf3638affa920930
+Author: Hadrien Libioulle <hlibioulle@windu.info.ucl.ac.be>
+Date:   Thu Oct 24 16:10:42 2019 +0200
+
+    Tests finally working
+
+ tests/tests.c | 107 ++++++++++++++++++++++++++++++++++++++--------------------
+ 1 file changed, 71 insertions(+), 36 deletions(-)
+
+commit 89c46547b7243cc46a849850e949832906585bd3
+Author: Louis <louis99laurent@gmail.com>
+Date:   Thu Oct 24 15:56:51 2019 +0200
+
+    Add TODO
+
+ src/sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 511aa9c3fa9271e352e25996809cfbdcf0d076c1
+Merge: 6f2e6ac 5eb75e1
+Author: Louis <louis99laurent@gmail.com>
+Date:   Thu Oct 24 15:38:56 2019 +0200
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 6f2e6ac92600f7ee64a192c28b0c4ea8dfd40a8e
+Author: Louis <louis99laurent@gmail.com>
+Date:   Thu Oct 24 15:38:37 2019 +0200
+
+    replaces 31 by BUFFER_SIZE
+
+ src/sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 97e5fd319cc2d069a0d634dcc779c7867c9ad28a
+Author: Louis <louis99laurent@gmail.com>
+Date:   Thu Oct 24 15:31:53 2019 +0200
+
+    Comments and specifications + removed prints
+
+ src/sender.c | 254 ++++++++++++++++++++++++++++-------------------------------
+ src/sender.h | 132 +++++++++++++++++--------------
+ 2 files changed, 193 insertions(+), 193 deletions(-)
+
+commit 5eb75e1161b6f2da1bd619a22294f53c437f9aec
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Thu Oct 24 13:35:50 2019 +0200
+
+    Tests changes again (trying to solve segfault)
+
+ src/sender.c  |  2 +-
+ tests/tests.c | 17 +++--------------
+ 2 files changed, 4 insertions(+), 15 deletions(-)
+
+commit 59a4364cc1228c4abe87fc9f80791734de81688f
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Thu Oct 24 13:26:51 2019 +0200
+
+    isUsefulAck test only
+
+ tests/tests.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+commit 0c3c0b2d06756d065ca7c6c4a329da08ce659c5d
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Thu Oct 24 13:16:18 2019 +0200
+
+    Structure changes
+
+ {Tests => Link_Simulator}/LICENSE     |   0
+ {Tests => Link_Simulator}/Makefile    |   0
+ {Tests => Link_Simulator}/README.md   |   0
+ Link_Simulator/link_sim               | Bin 0 -> 22920 bytes
+ {Tests => Link_Simulator}/link_sim.c  |   0
+ Link_Simulator/link_sim.o             | Bin 0 -> 19032 bytes
+ {Tests => Link_Simulator}/min_queue.c |   0
+ {Tests => Link_Simulator}/min_queue.h |   0
+ Link_Simulator/min_queue.o            | Bin 0 -> 3360 bytes
+ Makefile                              |  17 +++++++++--------
+ {Tests => tests}/.gitignore           |   0
+ {Tests => tests}/large_input.txt      |   0
+ {Tests => tests}/small_input.txt      |   0
+ {Tests => tests}/tests.c              |   2 +-
+ 14 files changed, 10 insertions(+), 9 deletions(-)
+
+commit 16119264df769c7126baac1a9ea3c8d64ff0158e
+Merge: 956885a 53de2d7
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Thu Oct 24 13:07:37 2019 +0200
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 956885ac8483285da965f6cbbbdeee99df32e1d4
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Thu Oct 24 13:07:34 2019 +0200
+
+    Misc
+
+ Submitable/gitlog.stat        |  46 ++++++++++++++++++++++++++++++++++++++++++
+ projet1_Laurent_Libioulle.zip | Bin 0 -> 1637518 bytes
+ 2 files changed, 46 insertions(+)
+
+commit 53de2d7b31b5eb2b34ed6a6efc251dff5753d0df
+Author: Louis <louis99laurent@gmail.com>
+Date:   Wed Oct 23 14:29:15 2019 +0200
+
+    makefile add -lcunit flags
+
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit 743ceb7597e1f5a99935726a8e662e804f98834b
+Merge: 5449912 408eff5
+Author: Louis <louis99laurent@gmail.com>
+Date:   Wed Oct 23 14:26:33 2019 +0200
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 408eff5111cd9057d789b28f2cb38d1915876d11
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:59:36 2019 +0200
+
+    Working
+
+ Submitable/Makefile | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
+
+commit 0659068c45166998a64c1638d1590adfc1414be0
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:53:47 2019 +0200
+
+    Makefile tweaks
+
+ Submitable/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit 0b872493177f6d336da690f7a589669f145bfea7
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:52:08 2019 +0200
+
+    Submitable corrections
+
+ Submitable/tests/tests.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit b9dc859546489c8f3f03c0fc7dc2dde59069f621
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:49:09 2019 +0200
+
+    Submitable folder added
+
+ Submitable/Makefile               |    30 +
+ Submitable/gitlog.stat            |   878 ++
+ Submitable/src/main.c             |    41 +
+ Submitable/src/packet_implem.c    |   341 +
+ Submitable/src/packet_interface.h |   209 +
+ Submitable/src/sender.c           |   280 +
+ Submitable/src/sender.h           |   151 +
+ Submitable/tests/large_input.txt  | 20899 ++++++++++++++++++++++++++++++++++++
+ Submitable/tests/small_input.txt  |   327 +
+ Submitable/tests/tests.c          |   185 +
+ tests                             |   Bin 28864 -> 28864 bytes
+ 11 files changed, 23341 insertions(+)
+
+commit 109b377cea72e5ba20b7e4158f29db4e9cac03ff
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:40:16 2019 +0200
+
+    Test operationals
+
+ tests.c | 27 ++++++++++++++++++++-------
+ 1 file changed, 20 insertions(+), 7 deletions(-)
+
+commit 5a73ba8faf91bf24b2fff812be4cbe419e05ab2b
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:28:06 2019 +0200
+
+    Working on my VM
+
+ tests   | Bin 28864 -> 28864 bytes
+ tests.c |   2 --
+ 2 files changed, 2 deletions(-)
+
+commit c7010a85f62a7f4e36ae7592c2ef101d3d89e1b7
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:19:27 2019 +0200
+
+    ultimate solution ...
+
+ tests.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+commit d4621f99689d0062e25a1bf55729676c77202619
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:17:51 2019 +0200
+
+    solved ??
+
+ tests.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+commit 41c2f4ee3507300444f1a187e240afd54636a155
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:14:12 2019 +0200
+
+    Maybe solved on intel machines ?
+
+ tests.c | 13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
+
+commit 288cb490659c637cbe0d0acc9453561fd31547f5
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:08:18 2019 +0200
+
+    Segfault resolved ?
+
+ tests   | Bin 28864 -> 28864 bytes
+ tests.c |   2 +-
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+commit 6c9f8b02b4cd03e833c7729094fd887b76838d5f
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:06:15 2019 +0200
+
+    Minor tweaks to tests
+
+ sender.c |   2 +-
+ tests    | Bin 0 -> 28864 bytes
+ tests.c  |   1 +
+ 3 files changed, 2 insertions(+), 1 deletion(-)
+
+commit 4bbc98aaa864bb8b1256d01d8ab02aa3612a9f8b
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 15:02:41 2019 +0200
+
+    Segfault in tests resolved
+
+ tests.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 0cbbf633e9a327382e9dd232944b2e49ed25cb09
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 14:59:38 2019 +0200
+
+    All possible tests implemented
+
+ sender.c |   7 ++--
+ tests.c  | 109 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 107 insertions(+), 9 deletions(-)
+
+commit 43282535e394e49d8adbaec0c20c24146b55b0a9
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 14:21:13 2019 +0200
+
+    isUsefulAck_tests working
+
+ sender.c | 2 +-
+ tests.c  | 8 ++++----
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+commit d10b94d5b8655e48076aadd90c7c50313596ac55
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 14:04:44 2019 +0200
+
+    Missing )
+
+ tests.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 581fc82abc30e18cd42c546ee94ece692ff77b4e
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 14:04:06 2019 +0200
+
+    Werror corrections
+
+ tests.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+commit 84beb1a6afe3b67d6d56e1d01b5ed450ec1e55df
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 14:02:25 2019 +0200
+
+    isUsefulAck_test
+
+ tests.c | 31 +++++++++++++++++++++++--------
+ 1 file changed, 23 insertions(+), 8 deletions(-)
+
+commit cf8cc146850eb207bfafb9782b35fdce84d9f663
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 13:48:18 2019 +0200
+
+    Tests
+
+ Makefile |  6 +++---
+ tests.c  | 21 ++++++++++++++++++---
+ 2 files changed, 21 insertions(+), 6 deletions(-)
+
+commit 5449912abc8b031f0cd2064933c817ef0ec0056f
+Merge: 252d592 146ce31
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 13:32:37 2019 +0200
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 252d5921fe499d82ebf8fa64e237d1578d9ca58f
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 13:32:22 2019 +0200
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+ Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+commit 58b3c94039f3e3945bbfd4bd1359d36876d18bb7
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 13:27:40 2019 +0200
+
+    change git structure + add tests to makefile
+
+ Makefile                                     | 30 ++++++++++++++++------------
+ tests.c => Tests/tests.c                     |  0
+ main.c => src/main.c                         |  0
+ packet_implem.c => src/packet_implem.c       |  0
+ packet_interface.h => src/packet_interface.h |  0
+ sender.c => src/sender.c                     |  0
+ sender.h => src/sender.h                     |  0
+ 7 files changed, 17 insertions(+), 13 deletions(-)
+
+commit 146ce31cafe1837d0e22423b3baf83b11f1ffb0f
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 13:22:33 2019 +0200
+
+    Make tests
+
+ Makefile | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
+
+commit 47f02ed2578dc2cf19e87be4319710beeb4f43ff
+Merge: abe0b03 826fc62
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 13:16:02 2019 +0200
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 826fc628718c12ee3681309dae849983b473cfb9
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 12:41:04 2019 +0200
+
+    removed unused var
+
+ sender.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+commit abe0b0340806628fbedbbe560c9aea8d64bd3182
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 12:40:54 2019 +0200
+
+    Auto stash before merge of "RemodulationPerformance" and "origin/RemodulationPerformance"
+
+ Makefile | 3 +--
+ sender.h | 7 ++++---
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+commit 172b3c8407f2a7496be467737c6fd79494c0de37
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 12:39:45 2019 +0200
+
+    Makefile's tab
+
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit 153f6a386259c3c2144de618a03cc88fe4cafa74
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 12:37:13 2019 +0200
+
+    change makefiles flags
+
+ Makefile | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+commit e7cfb7c3595ab5b4675fe4d29f9600dab90293db
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 12:30:02 2019 +0200
+
+    Makefile commenting
+
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit ab00fa37aef39f6cec688eb729ea5ef1f10ece12
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 12:29:06 2019 +0200
+
+    makefile tweaks
+
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 28e1f80a9c8714c254e0b8e8fb43fbf44b97be04
+Author: Louis <louis99laurent@gmail.com>
+Date:   Tue Oct 22 12:25:27 2019 +0200
+
+    make name to sender
+
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 3f0a0e937f6d45b3066e467593675813b10bafbf
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 12:23:19 2019 +0200
+
+    1st submitable
+
+ sender.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+commit e738cf1f5f692e74020a93dc4f89b15acf3cbd37
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 12:17:28 2019 +0200
+
+    Working !!
+
+ Tests/small_input.txt | 662 --------------------------------------------------
+ sender.c              |  14 +-
+ 2 files changed, 9 insertions(+), 667 deletions(-)
+
+commit 432ac223df45223eed1faa4785d202ea0fefede8
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Tue Oct 22 11:52:39 2019 +0200
+
+    improvements
+
+ sender.c | 81 +++++++++++++++++++++-------------------------------------------
+ sender.h | 11 +++++----
+ 2 files changed, 33 insertions(+), 59 deletions(-)
+
+commit eda187f19e7ac301d745f06c178186b12a3ebf96
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 21:04:49 2019 +0200
+
+    Working expected emptyBuffer()
+
+ sender.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+commit 5945c4ec7e1cb63d45f66e24f7b0891bb95d2ba1
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 20:23:50 2019 +0200
+
+    Tested and working in really poor, poor, normal and fast connection
+
+ Tests/small_input.txt | 990 ++++++++++++++++++++++++++++++++++++++++++++++++--
+ sender.c              |  30 +-
+ 2 files changed, 980 insertions(+), 40 deletions(-)
+
+commit bc579c00e65a1a8a451e72eeb5ea5f5620b92ca0
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 19:57:30 2019 +0200
+
+    Faster than ever
+
+ sender.c | 50 +++++++++++++++++++++++++++++++++++---------------
+ sender.h | 17 +++++++++++++----
+ 2 files changed, 48 insertions(+), 19 deletions(-)
+
+commit 4889f1c834bef883b73be9c5600f412ce7930147
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 18:41:24 2019 +0200
+
+    tweaks
+
+ Tests/small_input.txt | 218 ++++++--------------------------------------------
+ sender.c              |  17 ++--
+ 2 files changed, 36 insertions(+), 199 deletions(-)
+
+commit d2aa2b61301b55221d0d4b8a06b8eb9b82bc930e
+Merge: 9561c93 4460898
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 17:34:26 2019 +0200
+
+    Merge remote-tracking branch 'origin/RemodulationPerformance' into RemodulationPerformance
+
+commit 9561c93ed0e9cb4270c8cd9b0cb8c9b1e08454da
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 17:34:19 2019 +0200
+
+    improvements and tweaks
+
+ Tests/large_input.txt | 20898 +++++++++++++++++++++++++++++++++++++++++++++++-
+ Tests/small_input.txt |   218 +-
+ main.c                |     1 +
+ sender.c              |     8 +-
+ 4 files changed, 20773 insertions(+), 352 deletions(-)
+
+commit 44608984a93bcec7ac56ed6a8ed790fc6be8e934
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 21 17:26:39 2019 +0200
+
+    Modify Makefile
+
+ Makefile | 22 +++++++++++++++++-----
+ 1 file changed, 17 insertions(+), 5 deletions(-)
+
+commit 4ee10fe8767a4cfd60e3e8c48383e52255d8032a
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 16:46:37 2019 +0200
+
+    Structure change - Step 1
+
+ Tests/small_input.txt |   4 -
+ main.c                |   2 +-
+ sender.c              | 266 ++++++++++++++++++++++++++------------------------
+ sender.h              |  24 +++--
+ 4 files changed, 155 insertions(+), 141 deletions(-)
+
+commit 0374259614b693597e93b5e645538aeca8c4519b
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 21 14:13:32 2019 +0200
+
+    remove Some Print
+
+ sender.c | 45 +--------------------------------------------
+ 1 file changed, 1 insertion(+), 44 deletions(-)
+
+commit 622f4210e1c4b1cfeb24af2c73d8c4ee61919f68
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 21 12:24:06 2019 +0200
+
+    Modify last packet handling
+
+ sender.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+commit 5d057ce3fa56772881a00b0fa952e1998e247658
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 12:15:40 2019 +0200
+
+    EOF packet msg
+
+ sender.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+commit bb27c8638a9a77e78b9abac47869a29771e98264
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 12:02:22 2019 +0200
+
+    Tests
+
+ Tests/.gitignore                          |   3 +
+ Tests/LICENSE                             |  22 ++
+ Tests/Makefile                            |  35 ++
+ Tests/README.md                           |  26 ++
+ {files&link_sim => Tests}/large_input.txt |   0
+ Tests/link_sim.c                          | 606 ++++++++++++++++++++++++++++++
+ Tests/min_queue.c                         | 170 +++++++++
+ Tests/min_queue.h                         |  66 ++++
+ {files&link_sim => Tests}/small_input.txt |   0
+ files&link_sim/link_sim                   | Bin 22920 -> 0 bytes
+ 10 files changed, 928 insertions(+)
+
+commit 172e02d65dd76b61f2b092f2bf9ba11f918910c5
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 11:37:16 2019 +0200
+
+    files&link_sim
+
+ files&link_sim/large_input.txt | 641 +++++++++++++++++++++++++++++++++++++++++
+ files&link_sim/link_sim        | Bin 0 -> 22920 bytes
+ files&link_sim/small_input.txt |  59 ++++
+ 3 files changed, 700 insertions(+)
+
+commit 2c72781ac22f80f5800988ef359026fecb7f606f
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 11:23:22 2019 +0200
+
+    revents = 0
+
+ sender.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit c10b32345795121960b3077eec56a3d82a95378b
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 11:21:27 2019 +0200
+
+    eof ack added
+
+ sender.c | 10 ++++++++--
+ sender.h |  1 +
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+commit 1929bea62c8fa68776b46a8014473cf4450f6234
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 21 11:01:51 2019 +0200
+
+    printAsBinary removed, send(eof) added
+
+ main.c          |  1 +
+ packet_implem.c |  3 +++
+ sender.c        | 31 ++++++++++++++++++++-----------
+ sender.h        |  2 +-
+ 4 files changed, 25 insertions(+), 12 deletions(-)
+
+commit 3f3cd747d2cc8518dd2bfaf45a5e63e2ad4ad408
+Merge: 019e236 51e6cd8
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Sun Oct 20 16:13:07 2019 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+commit 019e2360098deabea2d3fc3dd446fb2ba0997e21
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Sun Oct 20 16:10:50 2019 +0200
+
+    1st working implementation wo/dynamic window
+
+ sender.c | 60 ++++++++++++++++++++++++++++++++++++++++++------------------
+ sender.h |  2 ++
+ 2 files changed, 44 insertions(+), 18 deletions(-)
+
+commit 51e6cd8f3d5d7a864c027186068dcf87ea999a9b
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sun Oct 20 14:43:59 2019 +0200
+
+    Corrected removeFromSent, minor tweaks
+
+ sender.c | 20 +++++++++++---------
+ sender.h |  3 ++-
+ tests.c  |  2 +-
+ 3 files changed, 14 insertions(+), 11 deletions(-)
+
+commit bfb8a666f7e22edd69577451c0e264f9a08d29e6
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sun Oct 20 12:54:46 2019 +0200
+
+    Corrected indent on all .c & .h
+
+ main.c             |  17 +++--
+ packet_implem.c    | 190 ++++++++++++++++++++++-------------------------------
+ packet_interface.h |  77 +++++++++++++---------
+ sender.c           |  90 ++++++++++++-------------
+ sender.h           |  22 +++----
+ tests.c            |   5 +-
+ 6 files changed, 194 insertions(+), 207 deletions(-)
+
+commit d0d832de73a8201604b9110616bc03d34367ea16
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Sat Oct 19 23:57:12 2019 +0200
+
+    A lot of tweaks, working but segfault in the receiver & window not dynamic
+
+ packet_implem.c | 12 ++++++------
+ sender.c        | 55 ++++++++++++++++++++++++++++++++++++++++++-------------
+ sender.h        |  5 +++++
+ 3 files changed, 53 insertions(+), 19 deletions(-)
+
+commit 31bd58ec5064b743db29ab00e849010cabb067ab
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Sat Oct 19 17:26:14 2019 +0200
+
+    addToBuffer, errno,  nbShifted corrections,
+
+ sender.c | 79 ++++++++++++++++++++++++++++------------------------------------
+ sender.h |  3 +++
+ 2 files changed, 38 insertions(+), 44 deletions(-)
+
+commit 8b1e7a25fb367633b2ca324b5ce5f5006919a0e8
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sat Oct 19 16:26:38 2019 +0200
+
+    change function description & getopt condition
+
+ main.c   | 2 +-
+ sender.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+commit a844ad9df945a67074f2a9ceeb444f70e3172cb3
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sat Oct 19 15:53:04 2019 +0200
+
+    Change conditions for 31-sized window
+
+ sender.c | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
+
+commit 870dcf43140b21a01a19117ca88f4f2dcb2f8e84
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sat Oct 19 15:43:24 2019 +0200
+
+    small tweaks
+
+ sender.c | 1 -
+ sender.h | 4 +---
+ 2 files changed, 1 insertion(+), 4 deletions(-)
+
+commit 32c70a60241d8ac639e545f13e24772a9acaf1b8
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sat Oct 19 14:48:14 2019 +0200
+
+    Add looping until the ack buffer is empty at the end of reader()
+
+ sender.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+commit 83f2a8c4656281f645303fdb1eee08c84d3c5d46
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sat Oct 19 01:30:29 2019 +0200
+
+    Add handling of cumulative acks in removeFromSent
+
+ sender.c | 31 ++++++++++++++++++-------------
+ 1 file changed, 18 insertions(+), 13 deletions(-)
+
+commit e526eb839426c13a0ebd21bdfe30ec432dbea465
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 18 23:51:11 2019 +0200
+
+    Add handling of curr_seqnum & window_end cycling trough all possible val
+
+ sender.c | 31 ++++++++++++++++---------------
+ sender.h |  2 +-
+ 2 files changed, 17 insertions(+), 16 deletions(-)
+
+commit cf0bea48bd0071e5498d4a662e677af01fb63964
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 18 22:58:09 2019 +0200
+
+    Added sent_packets buffer elements shift to the left in removeFromSent()
+
+ sender.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
+
+commit a60e7db53453892813685baddbef310594c37466
+Merge: 5bab8bc 4d9aed1
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 18 17:59:43 2019 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+commit 5bab8bccc2b1648c921192629751c2f14f2b6772
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 18 17:54:55 2019 +0200
+
+    Add functions specifications & commentaries & malloc checks
+
+ sender.c | 76 +++++++++++++++++++++++++++++++++++++---------------------------
+ sender.h | 59 ++++++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 100 insertions(+), 35 deletions(-)
+
+commit 4d9aed1a0d7effd7e18001c277c7a33b84a19643
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Fri Oct 18 16:10:49 2019 +0200
+
+    window size change
+
+ sender.c | 6 +++---
+ sender.h | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+commit 10b757e537e13b2b8ca70b4bdf6629c35ca18b53
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Fri Oct 18 15:46:14 2019 +0200
+
+    Printf added
+
+ Makefile | 2 +-
+ main.c   | 1 +
+ sender.c | 2 +-
+ 3 files changed, 3 insertions(+), 2 deletions(-)
+
+commit 427aa6aeb6c145f30556460c4e7db4e37e541176
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Fri Oct 18 15:43:01 2019 +0200
+
+    makefile
+
+ Makefile | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+commit 97ab2c091b4a9cf44121207b36e9a8decf658c12
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Fri Oct 18 15:39:57 2019 +0200
+
+    time.h added in sender.h
+
+ sender.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+commit 3884b43818030c66452226c3686f2be63af34e0c
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Fri Oct 18 15:34:47 2019 +0200
+
+    main.h deleted & Makefile creation
+
+ Makefile | 13 +++++++++++++
+ main.c   |  4 +++-
+ main.h   | 10 ----------
+ 3 files changed, 16 insertions(+), 11 deletions(-)
+
+commit 36fe895aacf9dd68d02fd718c0e182e7ac249eb4
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Thu Oct 17 22:13:03 2019 +0200
+
+    1st implementation [NOT FULLY TESTED]
+
+ main.c   |   2 +
+ sender.c | 154 +++++++++++++++++++++++++++++++++++++++++++++++++--------------
+ sender.h |  29 ++++++++----
+ 3 files changed, 142 insertions(+), 43 deletions(-)
+
+commit 1af190a73b632965d0ce37a805b7ed444e209265
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 16 23:10:19 2019 +0200
+
+    Resend algorithm WIP
+
+ sender.c | 65 +++++++++++++++++++++++++++++++++++++++++++++-------------------
+ 1 file changed, 46 insertions(+), 19 deletions(-)
+
+commit bb1011f8da52aad66ce20f99df3cb16e328f1407
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Wed Oct 16 22:47:11 2019 +0200
+
+    First send algorithm
+
+ sender.c | 42 +++++++++++++++++++++++++++++++++++-------
+ sender.h | 17 ++++++++++++++++-
+ 2 files changed, 51 insertions(+), 8 deletions(-)
+
+commit 5d0c2eff2c26f646c317ca7f65e22eff64d3bea6
+Author: Louis <louis99laurent@gmail.com>
+Date:   Wed Oct 16 21:46:08 2019 +0200
+
+    getaddrinfo
+
+ sender.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+commit d597bbe40d53fe3e43e476b8dd80f64401b7662c
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 18:33:31 2019 +0200
+
+    Main improvements
+
+ main.c   | 10 +++++++---
+ sender.c | 22 +++++++++++++++++++++-
+ sender.h |  9 +++++++--
+ 3 files changed, 35 insertions(+), 6 deletions(-)
+
+commit 7915648da75f1e66ac0895c36877f3327bd8270f
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 17:53:58 2019 +0200
+
+    Merge correction
+
+ sender.c | 5 ++---
+ sender.h | 4 ++--
+ 2 files changed, 4 insertions(+), 5 deletions(-)
+
+commit 4b1eae504bf52528ab8eaaf83ddb4901bd36d364
+Merge: d329ad4 869796d
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 17:52:34 2019 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+commit d329ad4b7c52ec6765d3f2d621834e912af98b9f
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 17:51:04 2019 +0200
+
+    Main simplification
+
+ main.c   | 7 +++----
+ sender.c | 7 +++++--
+ 2 files changed, 8 insertions(+), 6 deletions(-)
+
+commit 869796d44da66d22f921e84c5aa7692eb35aff18
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 14 17:48:53 2019 +0200
+
+    more commentaries
+
+ sender.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+commit bf621a60e69ae625964adbd554d746694bf2ee03
+Merge: 95cca85 fecaa01
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 14 17:36:02 2019 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+commit fecaa01c86fcded99899467ad0abc042a1767892
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 17:32:24 2019 +0200
+
+    Headers changed and simplified
+
+ main.c             | 27 +++++++++++++--------------
+ packet_implem.c    |  5 -----
+ packet_interface.h |  5 +++++
+ sender.c           | 17 ++++-------------
+ sender.h           | 12 ++++++++----
+ 5 files changed, 30 insertions(+), 36 deletions(-)
+
+commit 95cca85e4212e88d61c03427e301282523b2d6bb
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 14 17:31:57 2019 +0200
+
+    Add commentaries
+
+ sender.c | 28 ++++++++++------------------
+ sender.h |  6 +++---
+ 2 files changed, 13 insertions(+), 21 deletions(-)
+
+commit dbc4492583a338a826049e636af681f8054f0e3f
+Merge: e8e7310 2a51ef4
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 17:22:26 2019 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+commit e8e7310aa22f13526bbb271a89baf397c60d2e38
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 17:22:22 2019 +0200
+
+    CUnit implemented
+
+ main.c   | 33 +++++++++++++++++++++++++++++++++
+ main.h   | 10 ++++++++++
+ sender.c | 30 +-----------------------------
+ tests.c  | 47 +++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 91 insertions(+), 29 deletions(-)
+
+commit 2a51ef471f8c29bb46986407cec70b9be25016b2
+Author: Louis <louis99laurent@gmail.com>
+Date:   Mon Oct 14 16:52:18 2019 +0200
+
+    add includes
+
+ sender.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+commit 474fb3c5566006085cf51e95ff4fac9be62f22ce
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 16:48:36 2019 +0200
+
+    reader() func
+
+ sender.c | 57 +++++++++++++++++++++++++++++++++++++++++++++++++++------
+ sender.h | 15 ++++++++++++++-
+ 2 files changed, 65 insertions(+), 7 deletions(-)
+
+commit 324b808d84de1e2c4411094325cce4afa3832058
+Merge: 885a2c0 043b174
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 15:52:29 2019 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+commit 885a2c098035f1552fff63e2265442329dc83766
+Author: hlibioulle <hadrien.libioulle@student.uclouvain.be>
+Date:   Mon Oct 14 15:52:23 2019 +0200
+
+    "includes" in header file and global vars declaration
+
+ sender.c | 25 +++++++++++++++++++------
+ sender.h |  7 ++++++-
+ 2 files changed, 25 insertions(+), 7 deletions(-)
+
+commit 043b1749b4caa0884c3de1fbc7427eb40cb02693
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sun Oct 13 21:26:44 2019 +0200
+
+    modify packet_implem for shorter header
+
+ packet_implem.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+commit 1f681fb19794151a4b8858c242043e850ed3064b
+Author: Louis <louis99laurent@gmail.com>
+Date:   Sat Oct 12 22:16:55 2019 +0200
+
+    add protective programming and removed printf
+
+ packet_implem.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+commit 420c0d695f5f02e386de16c5c1d507cb27a614bf
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 22:05:29 2019 +0200
+
+    delete main.c + setup
+
+ main.c   | 43 -------------------------------------------
+ sender.c |  1 +
+ sender.h | 11 +++++++----
+ 3 files changed, 8 insertions(+), 47 deletions(-)
+
+commit 3267ca90a83d85dfcdd856be94291cfc87c8f17d
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 21:53:52 2019 +0200
+
+    add sender.h, moving definition of pkt struct to packet_interface.h
+
+ packet_implem.c    | 13 -------------
+ packet_interface.h | 25 +++++++++----------------
+ sender.h           |  8 ++++++++
+ 3 files changed, 17 insertions(+), 29 deletions(-)
+
+commit 3b8d49c35d89392dd79f9d6183dd744f18a50c88
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 21:47:47 2019 +0200
+
+    add sender.c
+
+ sender.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+commit 30025a7bae1355a37036431a64b5901dac969ea5
+Merge: dd7108d 51c3788
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 21:41:52 2019 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+commit dd7108d87d3112d4940199fc7bdc4a253038d71b
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 21:41:09 2019 +0200
+
+    add main.c packet_implem.c packet_interface.h
+
+ .gitignore         |   4 +
+ main.c             |  43 ++++++
+ packet_implem.c    | 384 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ packet_interface.h | 194 +++++++++++++++++++++++++++
+ 4 files changed, 625 insertions(+)
+
+commit 1a4e6653ccf93c35b6ceac19ed6c7c2311a2c950
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 21:31:20 2019 +0200
+
+    Revert "Add packet_implec.c & .h"
+    
+    This reverts commit 51c3788a9e5ca678b9dced8e29793563f2cc2838.
+
+commit 51c3788a9e5ca678b9dced8e29793563f2cc2838
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 21:31:20 2019 +0200
+
+    Add packet_implec.c & .h
+
+ packet_implem.c    | 384 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ packet_interface.h | 194 +++++++++++++++++++++++++++
+ 2 files changed, 578 insertions(+)
+
+commit e67d94aea2a0177b8c230fa1830dc302c1de087b
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Oct 11 18:46:19 2019 +0200
+
+    Add gitignore
+
+ .gitignore | 2 ++
+ 1 file changed, 2 insertions(+)
+
+commit b7daae659895315d35d706e4512e193c750c6cc3
+Author: Louis <louis99laurent@gmail.com>
+Date:   Fri Sep 27 17:08:19 2019 +0200
+
+    Initial commit
+
+ README.md | 1 +
+ 1 file changed, 1 insertion(+)

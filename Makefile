@@ -17,7 +17,6 @@ tests: tests/tests.o src/sender.o src/packet_implem.o
 	$(CC) -o tests.out tests/tests.o src/sender.o src/packet_implem.o -lz -lcunit
 	make clean
 	./tests.out
-	#rm tests.out
 
 tests/tests.o: tests/tests.c src/sender.h
 	$(CC) $(CFLAGS) -o tests/tests.o -c tests/tests.c -lcunit
